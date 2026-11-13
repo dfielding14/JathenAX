@@ -103,12 +103,33 @@ Each output file contains cell centers `x` and `y`, initial and final states
 and `cycle`. The first three components are $(\rho,\rho v_x,\rho v_y)$.
 The KH run appends the tracer density $\rho s$ as the fourth component.
 
+## Run from an input file
+
+Copy [inputs/turbulence.toml](inputs/turbulence.toml) and edit it like an
+AthenaK input deck. Set the uniform kinematic viscosity in `[hydro]` with
+`viscosity` and the Smagorinsky coefficient with `smagorinsky_cs`. The deck
+also sets the grid resolution, integrator, CFL number, drag, forcing, and
+output path.
+
+```sh
+python -m jathenax.run -i inputs/turbulence.toml
+python -m jathenax.run -i inputs/turbulence.toml --tlim 1 --viscosity 0 --output runs/inviscid.npz
+```
+
+The runner applies the selected problem's defaults, then the TOML settings,
+then explicit command-line overrides. Use `[problem]` with
+`name = "smooth"`, `"kh"`, or `"turbulence"`. The `[turb_driving]` table is
+for `turbulence`. The domain is a doubly periodic unit square. The run stops
+at `time.tlim` or the positive cycle limit `time.nlim`, whichever comes
+first. The output and checkpoint paths are relative to the working directory.
+
 ## Use a learned SGS stress
 
 Supply a JAX predictor with `--sgs-model` and its checkpoint with
 `--sgs-weights`. JathenAX calls the predictor on the full periodic density
 and velocity fields at each Runge–Kutta stage and adds its stress to the
 momentum face fluxes. See the [model interface and runnable example](examples/README.md).
+The same settings can be written as `model` and `weights` in an `[sgs]` table.
 
 ## Plot a run
 

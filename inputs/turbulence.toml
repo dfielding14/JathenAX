@@ -1,0 +1,45 @@
+[problem]
+name = "turbulence"
+
+[mesh]
+nx = 256
+ny = 256
+
+[time]
+integrator = "rk3"
+cfl_number = 0.4
+tlim = 45.0
+nlim = 100000
+
+[hydro]
+iso_sound_speed = 1.0
+dfloor = 1.17549e-38
+reconstruct = "ppm4"
+rsolver = "roe"
+viscosity = 1.5e-6     # Uniform kinematic viscosity
+smagorinsky_cs = 0.0  # Dimensionless Smagorinsky coefficient
+
+[hydro_srcterms]
+drag_rate = 0.3333335
+
+[turb_driving]
+rseed = 1618
+tcorr = 0.75
+dt_update = 0.0075
+tdriv_start = 0.0
+dedt = 0.03703705
+nlow = 3
+nhigh = 5
+npeak = 4
+sol_fraction = 1.0
+min_kx = -5
+max_kx = 5
+min_ky = -5
+max_ky = 5
+
+# [sgs]
+# model = "my_sgs_model"
+# weights = "checkpoints/model.npz"
+
+[output]
+file = "runs/driven_seed1618.npz"
