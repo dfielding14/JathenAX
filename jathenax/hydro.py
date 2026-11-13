@@ -6,8 +6,8 @@ from .forcing import normalize_force
 from .fluxes import (
     face_velocity_gradients,
     flux_divergence,
-    ppm4_face_states,
-    roe_isothermal_flux,
+    isothermal_flux,
+    reconstruct_faces,
     smagorinsky_viscosity,
     viscous_momentum_flux,
 )
@@ -90,17 +90,17 @@ def isothermal_timestep(W, dx, dy, cs, cfl, previous_dt, time, tlim, *,
 
 def isothermal_step(U, dt, dx, dy, cs, dfloor, integrator, *,
                     viscosity=0.0, smagorinsky_cs=0.0, drag_rate=0.0,
-                    raw_force=None, dedt=0.0, trace=False):
-    """Advance one periodic PPM4/Roe step with optional scalar densities."""
+                    raw_force=None, dedt=0.0, trace=False, reconstruct="ppm4", rsolver="roe"):
+    """Advance one periodic isothermal step with optional scalar densities."""
     U, W = recover_isothermal(U, dfloor)
     U_saved = U
     stages = []
     schedule = RK_STAGES[integrator]
     for stage, coefficients in enumerate(schedule, 1):
-        left_x, right_x = ppm4_face_states(W, axis=1)
-        left_y, right_y = ppm4_face_states(W, axis=0)
-        flux_x = roe_isothermal_flux(left_x, right_x, cs, axis=1)
-        flux_y = roe_isothermal_flux(left_y, right_y, cs, axis=0)
+        left_x, right_x = reconstruct_faces(W, 1, reconstruct, dfloor)
+        left_y, right_y = reconstruct_faces(W, 0, reconstruct, dfloor)
+        flux_x = isothermal_flux(left_x, right_x, cs, 1, rsolver)
+        flux_y = isothermal_flux(left_y, right_y, cs, 0, rsolver)
         if viscosity > 0.0 or smagorinsky_cs > 0.0:
             visc_x = viscous_momentum_flux(W, dx, dy, viscosity, smagorinsky_cs, axis=1)
             visc_y = viscous_momentum_flux(W, dx, dy, viscosity, smagorinsky_cs, axis=0)

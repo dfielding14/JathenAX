@@ -12,7 +12,9 @@
 #include "eos/eos.hpp"
 #include "hydro/hydro.hpp"
 #include "pgen/pgen.hpp"
+#include "reconstruct/plm.hpp"
 #include "reconstruct/ppm.hpp"
+#include "reconstruct/wenoz.hpp"
 
 namespace {
 
@@ -23,6 +25,7 @@ void WriteStage(Mesh *mesh, const Real stage_dt) {
   const auto &cells = mesh->mb_indcs;
   const auto &size = pack->pmb->mb_size.h_view(0);
   const auto &eos = hydro->peos->eos_data;
+  const auto reconstruct = hydro->recon_method;
 
   // This callback runs after the RK update and before primitive recovery.
   const auto w = Kokkos::create_mirror_view_and_copy(HostMemSpace(), hydro->w0);
@@ -47,15 +50,40 @@ void WriteStage(Mesh *mesh, const Real stage_dt) {
         }
       };
       write_cell(w);
-      // Use AthenaK's scalar PPM4 with the same incoming primitives and stencils.
+      // Reuse the scalar reconstruction routines behind the actual fluxes.
       for (int axis = 0; axis < 2; ++axis) {
         Real left[3], right[3], unused;
         for (int n = IDN; n <= IM2; ++n) {
           const auto q = [&](int offset) {
             return w(0,n,k,j + (axis == 1)*offset,i + (axis == 0)*offset);
           };
-          PPM4(q(-3), q(-2), q(-1), q(0), q(1), left[n], unused);
-          PPM4(q(-2), q(-1), q(0), q(1), q(2), unused, right[n]);
+          switch (reconstruct) {
+            case ReconstructionMethod::dc:
+              left[n] = q(-1);
+              right[n] = q(0);
+              break;
+            case ReconstructionMethod::plm:
+              PLM(q(-2), q(-1), q(0), left[n], unused);
+              PLM(q(-1), q(0), q(1), unused, right[n]);
+              break;
+            case ReconstructionMethod::ppm4:
+              PPM4(q(-3), q(-2), q(-1), q(0), q(1), left[n], unused);
+              PPM4(q(-2), q(-1), q(0), q(1), q(2), unused, right[n]);
+              break;
+            case ReconstructionMethod::ppmx:
+              PPMX(q(-3), q(-2), q(-1), q(0), q(1), left[n], unused);
+              PPMX(q(-2), q(-1), q(0), q(1), q(2), unused, right[n]);
+              break;
+            case ReconstructionMethod::wenoz:
+              WENOZ(q(-3), q(-2), q(-1), q(0), q(1), left[n], unused);
+              WENOZ(q(-2), q(-1), q(0), q(1), q(2), unused, right[n]);
+              break;
+          }
+          if (n == IDN && (reconstruct == ReconstructionMethod::ppmx
+                          || reconstruct == ReconstructionMethod::wenoz)) {
+            left[n] = fmax(left[n], eos.dfloor);
+            right[n] = fmax(right[n], eos.dfloor);
+          }
         }
         for (Real value : left) out << value << ' ';
         for (Real value : right) out << value << ' ';

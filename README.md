@@ -1,8 +1,9 @@
 # JathenAX
 
 JathenAX is a two-dimensional, doubly periodic, isothermal hydro solver in
-JAX. It uses AthenaK's PPM4 reconstruction, Roe flux, and RK2, RK3, or RK4 time
-integration. The grid runs on one JAX device. Uniform viscosity, Smagorinsky
+JAX. It ports AthenaK's isothermal reconstruction and Riemann solvers,
+with PPM4 and Roe as the defaults, and uses RK2, RK3, or RK4 time integration.
+The grid runs on one JAX device. Uniform viscosity, Smagorinsky
 viscosity, linear drag, seeded turbulence driving, and passive scalars are
 available.
 
@@ -83,6 +84,17 @@ time integrator. Use `--viscosity` for the uniform kinematic coefficient and
 `--smagorinsky-cs` for the dimensionless Smagorinsky coefficient. The
 turbulence example defaults to uniform viscosity $1.5\times10^{-6}$ and drag
 rate 0.3333335. Its forcing settings are in [run.py](jathenax/run.py).
+
+Use `--reconstruct` and `--rsolver` to select the face operators.
+
+| Option | Choices |
+| --- | --- |
+| `--reconstruct` | `dc` (donor cell), `plm` (piecewise linear), `ppm4` (default), `ppmx` (extremum-preserving PPM), `wenoz` |
+| `--rsolver` | `llf` (local Lax–Friedrichs), `hlle`, `roe` (default) |
+
+```sh
+python -m jathenax.run kh --reconstruct wenoz --rsolver hlle --output runs/kh_wenoz_hlle.npz
+```
 
 The run prints the device, precision, final simulation time, and changes in
 box-integrated conserved quantities. The first run includes JIT compilation.

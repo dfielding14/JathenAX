@@ -9,7 +9,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from jathenax.hydro import RK_STAGES, isothermal_step, isothermal_timestep
+from jathenax.fluxes import RECONSTRUCTIONS, RIEMANN_SOLVERS
+from jathenax.hydro import RK_STAGES, isothermal_step
 
 
 # These fields follow the columns written by the AthenaK source callback.
@@ -32,6 +33,8 @@ parser.add_argument("athena", type=Path, help="AthenaK built with the stage fixt
 parser.add_argument("output", type=Path, help="Directory for reference and JAX outputs")
 parser.add_argument("--viscosity", type=float, default=0.0)
 parser.add_argument("--smagorinsky-cs", type=float, default=0.0)
+parser.add_argument("--reconstruct", choices=RECONSTRUCTIONS, default="ppm4")
+parser.add_argument("--rsolver", choices=RIEMANN_SOLVERS, default="roe")
 args = parser.parse_args()
 athena = args.athena.resolve()
 deck = Path(__file__).with_name("athenak_stages.athinput").resolve()
@@ -46,7 +49,8 @@ for case, jump in (("smooth", "false"), ("jump", "true")):
             subprocess.run(
                 [str(athena), "-i", str(deck), f"time/integrator={integrator}",
                  f"problem/velocity_jump={jump}", f"hydro/viscosity={args.viscosity}",
-                 f"hydro/smagorinsky_cs={args.smagorinsky_cs}"],
+                 f"hydro/smagorinsky_cs={args.smagorinsky_cs}",
+                 f"hydro/reconstruct={args.reconstruct}", f"hydro/rsolver={args.rsolver}"],
                 cwd=folder, stdout=log, stderr=subprocess.STDOUT, check=True,
             )
 
@@ -61,6 +65,7 @@ for case, jump in (("smooth", "false"), ("jump", "true")):
             lambda U, dt: isothermal_step(
                 U, dt, dx, dy, cs, dfloor, integrator, trace=True,
                 viscosity=args.viscosity, smagorinsky_cs=args.smagorinsky_cs,
+                reconstruct=args.reconstruct, rsolver=args.rsolver,
             )
         )
         final, stages = jax.device_get(step(jnp.asarray(initial), dt))
@@ -95,8 +100,10 @@ for case, jump in (("smooth", "false"), ("jump", "true")):
                 )
                 if label in worst:
                     worst[label] = max(worst[label], error)
+                # Opposing flux contributions can cancel at supersonic jumps.
+                atol = 4e-14 if field.startswith("flux_") else 2e-14
                 np.testing.assert_allclose(
-                    actual, expected[field], rtol=2e-14, atol=2e-14,
+                    actual, expected[field], rtol=2e-14, atol=atol,
                     err_msg=f"{case} {integrator} stage {number} {field}",
                 )
         print(f"{case:6s} {integrator}  {len(stages)} stages  "

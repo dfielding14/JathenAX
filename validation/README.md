@@ -26,13 +26,15 @@ JAX_PLATFORMS=cpu python -m validation.compare_athenak \
 
 The fixture runs one fixed step on a periodic $24\times16$ grid, using a
 smooth flow and a velocity jump for each integrator. AthenaK writes incoming
-primitives, face states evaluated with its PPM4 routine, actual Riemann fluxes,
+primitives, face states evaluated with the selected reconstruction, actual Riemann fluxes,
 the saved RK register, and updated conserved variables with 17 significant
 digits. The comparison saves the JAX arrays and reports absolute and bitwise
 differences in `stage_errors.csv`.
 
 Add `--viscosity 0.001 --smagorinsky-cs 0.2` and use a fresh comparison
 directory to check the viscous face fluxes on the same flows.
+To check another pairing, add `--reconstruct wenoz --rsolver hlle` and use a
+fresh comparison directory.
 
 ## Verify periodic shear decay
 

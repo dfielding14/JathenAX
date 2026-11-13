@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from jathenax.forcing import normalize_force
-from jathenax.fluxes import flux_divergence, stress_face_fluxes
+from jathenax.fluxes import RIEMANN_SOLVERS, flux_divergence, stress_face_fluxes, wenoz_face_states
 from jathenax.hydro import (
     RK_STAGES,
     isothermal_step,
@@ -118,7 +118,8 @@ def test_periodic_step_conserves_mass_and_momentum(integrator):
     )
 
 
-def test_passive_scalars_share_mass_flux_without_changing_hydro():
+@pytest.mark.parametrize("rsolver", RIEMANN_SOLVERS)
+def test_passive_scalars_share_mass_flux_without_changing_hydro(rsolver):
     x = (np.arange(12) + 0.5) / 12 - 0.5
     U = kelvin_helmholtz(x, x)
     np.testing.assert_array_equal(U[..., 0], 1.0)
@@ -129,6 +130,7 @@ def test_passive_scalars_share_mass_flux_without_changing_hydro():
     step = jax.jit(lambda U: isothermal_step(
         U, 0.01, 1/12, 1/12, 1.0, 1e-10, "rk3", viscosity=0.001,
         smagorinsky_cs=0.2, drag_rate=0.3, raw_force=force, dedt=0.04,
+        rsolver=rsolver,
     ))
     final = np.asarray(step(U))
     tolerance = 32 * np.finfo(final.dtype).eps
@@ -137,6 +139,13 @@ def test_passive_scalars_share_mass_flux_without_changing_hydro():
     np.testing.assert_allclose(final[..., 3:].mean(axis=(0, 1), dtype=np.float64),
                                [0.5, 0.25], rtol=0, atol=tolerance)
     assert np.max(np.abs(final[..., 3] - U[..., 3])) > 1e-4
+
+
+def test_wenoz_float32_flat_stencils_at_jump():
+    W = jnp.asarray([[0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]], dtype=jnp.float32)
+    left, right = jax.jit(lambda W: wenoz_face_states(W, 1))(W)
+    np.testing.assert_allclose(left, jnp.roll(W, 1, axis=1), atol=2e-7)
+    np.testing.assert_allclose(right, W, atol=2e-7)
 
 
 def test_learned_stress_couples_conservatively_under_jit():

@@ -23,8 +23,8 @@ volume. Match AthenaK's primitive recovery and its floor application order.
 The isothermal law is $p=c_{\rm iso}^2\rho$.
 
 The isothermal state can append passive scalar densities $\rho s$. Reconstruct
-the concentrations $s$ with PPM4 and multiply the upwind face value by the
-Roe mass flux.
+the concentrations $s$ with the selected method and multiply the upwind
+face value by the Riemann solver's mass flux.
 
 Reconstruct the primitives along both directions from the same RK stage.
 Store one flux per periodic face. Face `[j, i]` is the low-coordinate face
@@ -34,8 +34,8 @@ divergence by differencing the high and low faces in each direction.
 
 | Operator | Planned choices |
 | --- | --- |
-| Reconstruction | `dc`, `plm`, `ppm4`, `ppmx`, `wenoz` with AthenaK's limiters, WENO weights, and face floors |
-| Riemann solver | `llf`, `hlle`, `roe` for both equations of state, plus `hllc` for ideal gas. Preserve Roe's LLF fallback for negative intermediate density. |
+| Reconstruction | Isothermal hydro supports `dc`, `plm`, `ppm4`, `ppmx`, and `wenoz`. PPMX and WENO-Z apply the face density floor. |
+| Riemann solver | Isothermal hydro supports `llf`, `hlle`, and `roe`. Roe retains its LLF fallback for negative intermediate density. HLLC belongs with the ideal-gas solver. |
 | Viscosity | Uniform kinematic viscosity plus optional `smagorinsky_cs`. The isothermal port uses face-averaged density, face velocity gradients, and $2/3$ trace subtraction. Ideal-gas viscous work belongs with the ideal-gas solver. |
 | Conduction | Constant conductivity for ideal gas. Add $-\kappa\nabla(p/\rho)$ to the energy flux at faces and use AthenaK's parabolic timestep bound. |
 
@@ -130,7 +130,8 @@ also needs a decision about the energy closure.
 1. **Current scaffold.** Verify all three RK schedules on a linear test equation
    and verify stress sign, component order, periodic wrapping, and conservation
    with a manufactured stress field inside JIT.
-2. **Hydro parity.** Isothermal PPM4/Roe now runs with RK2, RK3, and RK4.
+2. **Hydro parity.** All five isothermal reconstructions and three Riemann
+   solvers run with RK2, RK3, and RK4.
    The full-precision AthenaK fixture compares face states, fluxes, and RK
    registers for a smooth flow and a velocity jump at a prescribed timestep.
    See the [reproduction commands](validation/README.md#verify-against-athenak).
@@ -143,8 +144,8 @@ also needs a decision about the energy closure.
    timesteps, then checks adaptive timesteps and energy and momentum injection.
 5. **GPU run and solver menu.** Use the device-side timestep loop from the
    unforced example. Compare the $256^2$ pair's energy and enstrophy spectra
-   over a common late-time window. Validate the remaining reconstruction and
-   Riemann choices with focused AthenaK fixtures, including ideal-gas tests.
+   over a common late-time window. Verify the ideal-gas choices with AthenaK
+   when that solver is available.
    Test the student's predictor on a saved snapshot before applying it in a
    short coupled run.
 
