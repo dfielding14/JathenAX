@@ -110,10 +110,11 @@ architecture and device memory support. Match the padding used in training
 at the periodic seam.
 
 The model returns cell-centered $(\tau_{xx},\tau_{xy},\tau_{yy})$ in code units,
-with shape `(ny, nx, 3)`. Evaluate it once per RK stage. The scaffold already
-averages adjacent predictions onto periodic faces. For the positive Favre
-covariance convention used by Tiegan, add those results to the momentum flux
-with a plus sign. The RK update takes the negative divergence.
+with shape `(ny, nx, 3)`. The solver evaluates it once per RK stage and
+averages adjacent predictions onto periodic faces. It adds the positive
+Favre stress to the momentum flux. The RK update takes the negative divergence.
+The [model interface](examples/README.md) shows how to load a checkpoint and
+run the predictor on a snapshot or inside the solver.
 
 ```python
 tau = predict_stress(weights, primitives[..., :3])
@@ -122,8 +123,8 @@ flux_x = flux_x.at[..., 1:3].add(tau_x)
 flux_y = flux_y.at[..., 1:3].add(tau_y)
 ```
 
-Start learned-stress tests with the isothermal equations. An ideal-gas LES
-also needs a decision about the energy closure.
+The hook uses the existing isothermal equations and timestep limits.
+An ideal-gas LES also needs a decision about the energy closure.
 
 ## Build and verification order
 

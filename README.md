@@ -103,6 +103,13 @@ Each output file contains cell centers `x` and `y`, initial and final states
 and `cycle`. The first three components are $(\rho,\rho v_x,\rho v_y)$.
 The KH run appends the tracer density $\rho s$ as the fourth component.
 
+## Use a learned SGS stress
+
+Supply a JAX predictor with `--sgs-model` and its checkpoint with
+`--sgs-weights`. JathenAX calls the predictor on the full periodic density
+and velocity fields at each Runge–Kutta stage and adds its stress to the
+momentum face fluxes. See the [model interface and runnable example](examples/README.md).
+
 ## Plot a run
 
 ```sh

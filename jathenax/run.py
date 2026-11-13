@@ -2,6 +2,7 @@
 
 import argparse
 from functools import partial
+from importlib import import_module
 from math import isfinite
 from pathlib import Path
 
@@ -17,12 +18,12 @@ from .initial_conditions import kelvin_helmholtz
 
 @partial(jax.jit, static_argnames=(
     "integrator", "viscosity", "smagorinsky_cs", "drag_rate", "dt_update", "tdriv_start", "dedt",
-    "reconstruct", "rsolver",
+    "reconstruct", "rsolver", "predict_stress",
 ))
 def evolve_isothermal(U, dx, dy, cs, dfloor, integrator, cfl, tlim, nlim, *,
                       viscosity=0.0, smagorinsky_cs=0.0, drag_rate=0.0,
                       forcing=None, dt_update=1.0, tdriv_start=0.0, dedt=0.0,
-                      reconstruct="ppm4", rsolver="roe"):
+                      reconstruct="ppm4", rsolver="roe", predict_stress=None, sgs_weights=None):
     """Advance the device-resident periodic grid to the end time or step limit."""
     for name, value in (("viscosity", viscosity), ("smagorinsky_cs", smagorinsky_cs),
                         ("drag_rate", drag_rate), ("dedt", dedt)):
@@ -54,6 +55,7 @@ def evolve_isothermal(U, dx, dy, cs, dfloor, integrator, cfl, tlim, nlim, *,
             viscosity=viscosity, smagorinsky_cs=smagorinsky_cs, drag_rate=drag_rate,
             raw_force=raw_force, dedt=power,
             reconstruct=reconstruct, rsolver=rsolver,
+            predict_stress=predict_stress, sgs_weights=sgs_weights,
         )
         return U, time + dt, dt, cycle + 1, update, raw_force
 
@@ -80,8 +82,12 @@ if __name__ == "__main__":
                         help="Riemann solver (default: roe)")
     parser.add_argument("--viscosity", type=float, help="Uniform kinematic viscosity")
     parser.add_argument("--smagorinsky-cs", type=float, default=0.0)
+    parser.add_argument("--sgs-model", help="Python module with load_weights and predict_stress")
+    parser.add_argument("--sgs-weights", type=Path, help="Checkpoint passed to load_weights")
     parser.add_argument("--output", type=Path, help="Output .npz file")
     args = parser.parse_args()
+    if args.sgs_weights is not None and args.sgs_model is None:
+        parser.error("--sgs-weights requires --sgs-model")
 
     # All examples use a periodic unit square and unit sound speed.
     nx, ny, tlim, filename = {
@@ -131,11 +137,18 @@ if __name__ == "__main__":
         vy = 0.2 * np.sin(phase_x)
         U_initial = jax.device_put(np.stack((rho, rho * vx, rho * vy), axis=-1))
 
+    predict_stress, sgs_weights = None, None
+    if args.sgs_model:
+        model = import_module(args.sgs_model)
+        predict_stress = model.predict_stress
+        sgs_weights = jax.device_put(model.load_weights(args.sgs_weights), U_initial.device)
+
     U, time, dt, cycle = jax.device_get(evolve_isothermal(
         U_initial, dx, dy, cs, dfloor, args.integrator, cfl, tlim, nlim,
         viscosity=viscosity, smagorinsky_cs=args.smagorinsky_cs, drag_rate=drag_rate,
         forcing=forcing, dt_update=dt_update, dedt=dedt,
         reconstruct=args.reconstruct, rsolver=args.rsolver,
+        predict_stress=predict_stress, sgs_weights=sgs_weights,
     ))
     if not np.isfinite(U).all() or time != np.asarray(tlim, dtype=time.dtype):
         raise RuntimeError(f"Periodic run ended at t={time} after {cycle} steps")
@@ -143,7 +156,7 @@ if __name__ == "__main__":
     initial = np.asarray(U_initial)
     output.parent.mkdir(parents=True, exist_ok=True)
     np.savez(output, x=x, y=y, initial=initial, conserved=U, time=time, dt=dt, cycle=cycle,
-             problem=args.problem)
+             problem=args.problem, sgs_model=args.sgs_model or "")
     drift = (U.sum(axis=(0, 1), dtype=np.float64)
              - initial.sum(axis=(0, 1), dtype=np.float64)) * dx * dy
     print(f"{args.integrator.upper()} on {U_initial.device}, {U.dtype}, {cycle} steps to t={time:.6g}")

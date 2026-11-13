@@ -6,7 +6,9 @@ import numpy as np
 import pytest
 
 from jathenax.forcing import normalize_force
-from jathenax.fluxes import RIEMANN_SOLVERS, flux_divergence, stress_face_fluxes, wenoz_face_states
+from jathenax.fluxes import (
+    RIEMANN_SOLVERS, flux_divergence, isothermal_flux, stress_face_fluxes, wenoz_face_states,
+)
 from jathenax.hydro import (
     RK_STAGES,
     isothermal_step,
@@ -15,6 +17,7 @@ from jathenax.hydro import (
     rk_stage,
 )
 from jathenax.initial_conditions import kelvin_helmholtz
+from jathenax.run import evolve_isothermal
 
 
 @pytest.mark.parametrize(("integrator", "order"), [("rk2", 2), ("rk3", 3), ("rk4", 4)])
@@ -182,3 +185,58 @@ def test_learned_stress_couples_conservatively_under_jit():
     tolerance = 32 * np.finfo(result.dtype).eps
     np.testing.assert_allclose(result, expected, rtol=tolerance, atol=tolerance)
     np.testing.assert_allclose(result.sum(axis=(0, 1)), 0.0, atol=tolerance * nx * ny)
+
+
+@pytest.mark.parametrize("integrator", RK_STAGES)
+def test_sgs_predictor_uses_each_stage_and_conserves_momentum(integrator):
+    x = (np.arange(8) + 0.5) / 8 - 0.5
+    U = jnp.asarray(kelvin_helmholtz(x, x))
+    weights = {"scale": jnp.asarray([0.0125, 0.025, -0.0375])}
+
+    def predict_stress(weights, W):
+        assert W.shape == (8, 8, 3)
+        return weights["scale"] * W
+
+    @jax.jit
+    def step(U, weights):
+        return isothermal_step(
+            U, 0.01, 1/8, 1/8, 1.0, 1e-10, integrator, trace=True,
+            predict_stress=predict_stress, sgs_weights=weights,
+        )
+
+    final, stages = jax.device_get(step(U, weights))
+    baseline, _ = step(U, {"scale": jnp.zeros(3, dtype=U.dtype)})
+    assert np.max(np.abs(final[..., 1:3] - baseline[..., 1:3])) > 1e-4
+    tolerance = 16 * np.finfo(final.dtype).eps
+    for stage in stages:
+        tau = np.asarray(weights["scale"]) * stage["primitives"][..., :3]
+        for axis, direction, components in ((1, "x", slice(0, 2)), (0, "y", slice(1, 3))):
+            gas = isothermal_flux(stage[f"left_{direction}"], stage[f"right_{direction}"], 1.0, axis)
+            stress = tau[..., components]
+            expected = 0.5 * (stress + np.roll(stress, 1, axis=axis))
+            added = stage[f"flux_{direction}"] - np.asarray(gas)
+            np.testing.assert_allclose(added[..., 1:3], expected, rtol=0, atol=tolerance)
+            np.testing.assert_allclose(added[..., [0, 3]], 0.0, rtol=0, atol=tolerance)
+    np.testing.assert_allclose(final.mean(axis=(0, 1)), np.asarray(U).mean(axis=(0, 1)),
+                               rtol=0, atol=tolerance)
+
+
+def test_zero_sgs_predictor_matches_baseline_evolution():
+    x = (np.arange(8) + 0.5) / 8 - 0.5
+    U = jnp.asarray(kelvin_helmholtz(x, x))
+    args = (U, 1/8, 1/8, 1.0, 1e-10, "rk3", 0.4, 0.1, 10)
+
+    def zero_stress(weights, W):
+        return jnp.zeros_like(W)
+
+    baseline = evolve_isothermal(*args)
+    coupled = evolve_isothermal(*args, predict_stress=zero_stress)
+    for a, b in zip(baseline, coupled, strict=True):
+        np.testing.assert_array_equal(a, b)
+
+
+def test_sgs_predictor_requires_the_full_grid():
+    U = jnp.ones((6, 8, 3))
+    with pytest.raises(ValueError, match="predict_stress must return"):
+        isothermal_step(U, 0.01, 1/8, 1/6, 1.0, 1e-10, "rk3",
+                        predict_stress=lambda weights, W: W[:1])

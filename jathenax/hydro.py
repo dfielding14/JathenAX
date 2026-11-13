@@ -9,6 +9,7 @@ from .fluxes import (
     isothermal_flux,
     reconstruct_faces,
     smagorinsky_viscosity,
+    stress_face_fluxes,
     viscous_momentum_flux,
 )
 
@@ -90,7 +91,8 @@ def isothermal_timestep(W, dx, dy, cs, cfl, previous_dt, time, tlim, *,
 
 def isothermal_step(U, dt, dx, dy, cs, dfloor, integrator, *,
                     viscosity=0.0, smagorinsky_cs=0.0, drag_rate=0.0,
-                    raw_force=None, dedt=0.0, trace=False, reconstruct="ppm4", rsolver="roe"):
+                    raw_force=None, dedt=0.0, trace=False, reconstruct="ppm4", rsolver="roe",
+                    predict_stress=None, sgs_weights=None):
     """Advance one periodic isothermal step with optional scalar densities."""
     U, W = recover_isothermal(U, dfloor)
     U_saved = U
@@ -106,6 +108,15 @@ def isothermal_step(U, dt, dx, dy, cs, dfloor, integrator, *,
             visc_y = viscous_momentum_flux(W, dx, dy, viscosity, smagorinsky_cs, axis=0)
             flux_x = flux_x.at[..., 1:3].add(visc_x)
             flux_y = flux_y.at[..., 1:3].add(visc_y)
+        if predict_stress is not None:
+            primitives = W[..., :3]
+            tau = jnp.asarray(predict_stress(sgs_weights, primitives))
+            if tau.shape != primitives.shape or not jnp.issubdtype(tau.dtype, jnp.floating):
+                raise ValueError("predict_stress must return a floating array of shape (ny, nx, 3)")
+            # Positive Favre stress enters the momentum flux with a plus sign.
+            tau_x, tau_y = stress_face_fluxes(tau.astype(U.dtype))
+            flux_x = flux_x.at[..., 1:3].add(tau_x)
+            flux_y = flux_y.at[..., 1:3].add(tau_y)
         div_flux = flux_divergence(flux_x, flux_y, dx, dy)
         U, U_saved = rk_stage(U, U_saved, div_flux, dt, coefficients)
         if drag_rate > 0.0:
