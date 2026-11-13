@@ -1,0 +1,83 @@
+--- a/src/srcterms/turb_driver.cpp
++++ b/src/srcterms/turb_driver.cpp
+@@ -30,6 +30,7 @@
+ #include "eos/ideal_c2p_mhd.hpp"
+ #include "turb_driver.hpp"
+ #include "globals.hpp"
++#include "athenak_forcing_trace.hpp"
+ 
+ namespace {
+ 
+@@ -510,6 +511,10 @@
+     rstate.idum = -1;
+   }
+   rstate.iset = 0;
++  RNG_State uniform_state = {};
++  uniform_state.idum = rstate.idum;
++  auto uniform = TraceText("uniform.txt");
++  for (int i = 0; i < 64; ++i) uniform << RanSt(&uniform_state) << '\n';
+ 
+   auto kx_mode_ = kx_mode;
+   auto ky_mode_ = ky_mode;
+@@ -758,6 +763,7 @@
+       turb_flag != 1) {  // Update forcing if continuous or t<tdriv_duration
+     for (int i_turb_update = n_turb_updates_yet; i_turb_update < n_turb_updates_reqd;
+          i_turb_update++) {
++      auto gaussian = TraceText("gaussian.txt");
+       for (int nmode = 0; nmode < mode_count; ++nmode) {
+         int no_dir = (pm->mesh_indcs.nx3 > 1) ? 3 : 2;
+         Real kx = kx_mode_.h_view(nmode);
+@@ -798,8 +804,11 @@
+           mode_noise_imag_.h_view(dir, nmode) = 0.0;
+         }
+         for (int dir = 0; dir < no_dir; dir++) {
+-          Real amp_real_dir = norm * RanGaussianSt(&(rstate));
+-          Real amp_imag_dir = norm * RanGaussianSt(&(rstate));
++          Real gaussian_real = RanGaussianSt(&rstate);
++          Real gaussian_imag = RanGaussianSt(&rstate);
++          gaussian << gaussian_real << ' ' << gaussian_imag << '\n';
++          Real amp_real_dir = norm * gaussian_real;
++          Real amp_imag_dir = norm * gaussian_imag;
+           mode_noise_real_.h_view(dir, nmode) = amp_real_dir;
+           mode_noise_imag_.h_view(dir, nmode) = amp_imag_dir;
+           k_dot_amp_imag += k[dir] * amp_imag_dir;
+@@ -842,6 +851,15 @@
+               fcorr * mode_amp_imag_.h_view(dir, n) +
+               gcorr * mode_noise_imag_.h_view(dir, n);
+         }
++      }
++      auto modes = TraceText("modes.txt");
++      for (int n = 0; n < mode_count; ++n) {
++        modes << i_turb_update << ' ' << mode_indices_[n][0] << ' ' << mode_indices_[n][1];
++        for (int dir = 0; dir < 2; ++dir) {
++          modes << ' ' << mode_amp_real_.h_view(dir, n)
++                << ' ' << mode_amp_imag_.h_view(dir, n);
++        }
++        modes << '\n';
+       }
+       mode_amp_real_.template modify<HostMemSpace>();
+       mode_amp_real_.template sync<DevExeSpace>();
+@@ -963,6 +981,7 @@
+       (current_time >= tdriv_start) &&
+       ((t_since_start < tdriv_duration) || turb_flag != 1)) {
+     RenderForce();
++    TraceField(pm, force_, "raw", 2);
+ 
+     if (localization_ != TurbLocalization::none) {
+       par_for(
+@@ -1554,8 +1573,15 @@
+   // Normalize against the state being kicked, after the final fluid update.
+   // shortcut: first-order splitting for smooth forcing; revisit the splitting
+   // only if higher temporal accuracy of the coupled evolution is needed.
++  auto steps = TraceText("steps.txt");
++  steps << pm->ncycle << ' ' << pm->time << ' ' << pm->dt << ' '
++        << n_turb_updates_yet - 1 << '\n';
++  auto &u = pmy_pack->phydro->u0;
++  TraceField(pm, u, "before", 3);
+   UpdateForcing(pdrive, stage);
++  TraceField(pm, force, "acceleration", 2);
+   ApplyForcingWithStep(pm->dt);
++  TraceField(pm, u, "after", 3);
+   return TaskStatus::complete;
+ }
+ 

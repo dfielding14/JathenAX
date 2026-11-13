@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jathenax"
+version = "0.1.0"
+description = "AthenaK-style 2D periodic hydrodynamics in JAX"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["jax>=0.4.30", "numpy"]
+
+[project.optional-dependencies]
+analysis = ["matplotlib>=3.8"]
+test = ["pytest>=8"]
+
+[tool.setuptools]
+packages = ["jathenax"]

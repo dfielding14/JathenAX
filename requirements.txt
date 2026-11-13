@@ -1,0 +1,2 @@
+# Install the solver and the plotting tools from this checkout.
+-e .[analysis]

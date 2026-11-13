@@ -1,0 +1,4 @@
+-r requirements.txt
+jax==0.4.34
+jaxlib==0.4.34
+jax-metal==0.1.1
