@@ -3,13 +3,26 @@
 import argparse
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 
 
+def mode_shells(shape):
+    frequencies = [np.fft.fftfreq(n)*n for n in shape]
+    waves = np.meshgrid(*frequencies, indexing="ij", sparse=True)
+    return np.floor(np.sqrt(sum(k*k for k in waves)) + 0.5).astype(int)
+
+
+def shell_energy(components, shell):
+    """Half the squared vector amplitude, summed in integer Fourier shells."""
+    power = 0.5 * sum(np.abs(np.fft.fftn(v) / shell.size)**2 for v in components)
+    return np.bincount(shell.ravel(), power.ravel())
+
+
 if __name__ == "__main__":
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("snapshot", type=Path)
     parser.add_argument("--output", type=Path, help="Figure path, e.g. spectra.png")
@@ -19,35 +32,41 @@ if __name__ == "__main__":
         parser.error("--output must be a figure path")
 
     with np.load(args.snapshot) as snapshot:
-        rho, mx, my = np.moveaxis(snapshot["conserved"][..., :3].astype(np.float64), -1, 0)
+        U = snapshot["conserved"].astype(np.float64)
         time = float(snapshot["time"])
-    ny, nx = rho.shape
-    kx, ky = np.fft.fftfreq(nx) * nx, np.fft.fftfreq(ny) * ny
-    radius = np.hypot(kx[None, :], ky[:, None])
-    shell = np.floor(radius + 0.5).astype(int)
+    rho = U[..., 0]
+    ndim = rho.ndim
+    velocity = [U[..., i + 1] / rho for i in range(ndim)]
+    frequencies = [np.fft.fftfreq(n) * n for n in rho.shape]
+    shell = mode_shells(rho.shape)
     mode = np.arange(shell.max() + 1)
-
-    vx, vy = mx / rho, my / rho
     root_rho = np.sqrt(rho)
-    ax = np.fft.fft2(root_rho * vx) / rho.size
-    ay = np.fft.fft2(root_rho * vy) / rho.size
-    energy = np.bincount(shell.ravel(), (0.5 * (np.abs(ax)**2 + np.abs(ay)**2)).ravel())
-    # Omit the axis Nyquist mode when taking a real Fourier derivative.
-    if nx % 2 == 0:
-        kx[nx // 2] = 0
-    if ny % 2 == 0:
-        ky[ny // 2] = 0
-    omega = 2j * np.pi * (kx[None, :] * np.fft.fft2(vy) - ky[:, None] * np.fft.fft2(vx))
-    enstrophy = np.bincount(shell.ravel(), (0.5 * np.abs(omega / rho.size)**2).ravel())
-    np.testing.assert_allclose(energy.sum(), 0.5 * np.mean(rho * (vx**2 + vy**2)), rtol=1e-12)
+    energy = shell_energy((root_rho*v for v in velocity), shell)
+    # The real Fourier derivative vanishes at each even axis's Nyquist mode.
+    for k in frequencies:
+        if len(k) % 2 == 0:
+            k[len(k) // 2] = 0
+    k = np.meshgrid(*frequencies, indexing="ij", sparse=True)[::-1]
+    vhat = [np.fft.fftn(v) / rho.size for v in velocity]
+    enstrophy_density = np.zeros_like(rho)
+    for i in range(ndim):
+        for j in range(i + 1, ndim):
+            curl = 2j * np.pi * (k[i] * vhat[j] - k[j] * vhat[i])
+            enstrophy_density += 0.5 * np.abs(curl)**2
+    enstrophy = np.bincount(shell.ravel(), enstrophy_density.ravel())
+    np.testing.assert_allclose(energy.sum(), 0.5 * np.mean(rho * sum(v**2 for v in velocity)),
+                               rtol=1e-12)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     np.savetxt(output.with_suffix(".csv"), np.column_stack((mode, energy, enstrophy)),
                delimiter=",", header="mode,kinetic_energy,enstrophy", comments="",
                fmt=("%d", "%.16e", "%.16e"))
-    complete = slice(1, min(nx, ny) // 2)
-    fig, axes = plt.subplots(1, 2, figsize=(8.5, 3.6), layout="constrained")
-    for ax, values, label in zip(axes, (energy, enstrophy), ("Kinetic energy", "Enstrophy")):
+    complete = slice(1, min(rho.shape) // 2)
+    spectra = [(energy, "Kinetic energy")]
+    if ndim > 1:
+        spectra.append((enstrophy, "Enstrophy"))
+    fig, axes = plt.subplots(1, len(spectra), figsize=(4.25 * len(spectra), 3.6), layout="constrained")
+    for ax, (values, label) in zip(np.atleast_1d(axes), spectra):
         ax.loglog(mode[complete], values[complete])
         ax.set(xlabel="Box mode", ylabel=label)
         ax.grid(alpha=0.2)

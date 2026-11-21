@@ -2,8 +2,8 @@
 
 ## Target
 
-JathenAX is a finite-volume solver for 2D Newtonian hydro on a uniform, doubly
-periodic Cartesian grid. The whole grid lives on one GPU. The reference is
+JathenAX is a finite-volume solver for Newtonian hydro on a uniform, periodic
+Cartesian grid in one, two, or three dimensions. The whole grid lives on one JAX device. The reference is
 AthenaK's [Tiegan SGS commit c50d3d5e9](https://github.com/dfielding14/athenak/commit/c50d3d5e962cf4c576de88c7b5dea33f4d2674dc).
 Use a fresh AthenaK run on that commit for comparison. It applies a single
 forcing kick per timestep, whereas the earlier seed-1618 pair used stage kicks.
@@ -16,28 +16,33 @@ with AthenaK's parameter names where the semantics match.
 
 ## State and face fluxes
 
-The state shape is `(ny, nx, nvar)`, with components $(\rho,m_x,m_y)$ for
-isothermal hydro and $(\rho,m_x,m_y,E)$ for ideal gas. The ideal-gas
-primitives are $(\rho,v_x,v_y,e)$, where $e$ is internal energy per unit
-volume. Match AthenaK's primitive recovery and its floor application order.
-The isothermal law is $p=c_{\rm iso}^2\rho$.
+Spatial array axes run from the last active coordinate to the first, with
+components last. A 3D ideal-gas state has shape `(nz, ny, nx, 5)` and
+components $(\rho,m_x,m_y,m_z,E)$. Lower dimensions carry one momentum per
+active axis. Isothermal states omit $E$. Both EOSs can append passive
+scalar densities $\rho s$. The isothermal law is $p=c_{\rm iso}^2\rho$.
+For ideal gas, recover $e=E-|\boldsymbol m|^2/(2\rho)$ and $p=(\gamma-1)e$.
+Density and pressure floors preserve the cell momenta. Raising the thermal
+energy to its floor also raises conserved $E$.
 
-The isothermal state can append passive scalar densities $\rho s$. Reconstruct
-the concentrations $s$ with the selected method and multiply the upwind
-face value by the Riemann solver's mass flux.
+Reconstruct density, velocity, ideal-gas internal energy density, and tracer
+concentrations along each active axis from the same incoming RK stage. A
+face carries the index of the cell immediately above it. The low face comes
+from that cell and its periodic neighbor. Each passive tracer flux equals
+the Riemann mass flux times its upwind concentration.
 
-Reconstruct the primitives along both directions from the same RK stage.
-Store one flux per periodic face. Face `[j, i]` is the low-coordinate face
-of cell `[j, i]` in that flux's direction. Use wrapped shifts for neighbors
-and swap normal and transverse components when solving along $y$. Form the
-divergence by differencing the high and low faces in each direction.
-
-| Operator | Planned choices |
+| Operator | Implementation |
 | --- | --- |
-| Reconstruction | Isothermal hydro supports `dc`, `plm`, `ppm4`, `ppmx`, and `wenoz`. PPMX and WENO-Z apply the face density floor. |
-| Riemann solver | Isothermal hydro supports `llf`, `hlle`, and `roe`. Roe retains its LLF fallback for negative intermediate density. HLLC belongs with the ideal-gas solver. |
-| Viscosity | Uniform kinematic viscosity plus optional `smagorinsky_cs`. The isothermal port uses face-averaged density, face velocity gradients, and $2/3$ trace subtraction. Ideal-gas viscous work belongs with the ideal-gas solver. |
-| Conduction | Constant conductivity for ideal gas. Add $-\kappa\nabla(p/\rho)$ to the energy flux at faces and use AthenaK's parabolic timestep bound. |
+| Reconstruction | `dc`, `plm`, `ppm4`, `ppmx`, and `wenoz`. PPMX and WENO-Z apply the face density and ideal-gas pressure floors. |
+| Riemann solver | `llf`, `hlle`, and `roe` for both equations of state. Ideal gas also supports `hllc`. Roe falls back to LLF for negative intermediate density. |
+| Viscosity | Uniform kinematic viscosity and optional Smagorinsky viscosity. Face stresses use the physical $2/3$ trace subtraction in every dimension. The ideal-gas energy flux includes stress work at the mean face velocity. |
+
+HLLC uses AthenaK's primitive-variable pressure estimate for the outer waves and
+clips the contact pressure at zero. In both HLLC and HLLE, a left speed at or
+above zero becomes $-10^{-20}$ and a right speed at or below zero becomes $10^{-20}$.
+HLLE estimates the ideal-gas Roe sound speed from the averaged enthalpy.
+WENO-Z uses AthenaK's $\epsilon=10^{-42}$. In FP32 it rescales the smoothness
+indicators and epsilon together to keep the weights and their gradients finite.
 
 ## Time integration
 
@@ -64,18 +69,18 @@ the incoming stage primitives. Apply the turbulence kick after the final stage's
 drag and before final primitive recovery. Recover primitives and apply floors
 after every stage.
 
-Compute the next timestep from the post-kick state. Match the directional
-minimum of $\Delta x/(|v_x|+c_s)$ and $\Delta y/(|v_y|+c_s)$ over the grid.
-Include the viscous, conductive, and drag bounds, the factor-of-two growth cap,
-and clipping at the final time. The forcing update times and snapshot times
-leave the hydro timestep unchanged.
+Compute the next timestep from the post-kick state. Take the minimum of
+$\Delta x_i/(|v_i|+c)$ over cells and active directions, with $c^2=\gamma p/\rho$
+for ideal gas. Apply the diffusion, drag, and cooling bounds before the CFL
+factor, then the factor-of-two growth cap and end-time clipping.
 
-For viscosity, let $h=\min(\Delta x,\Delta y)$. Before applying the CFL
-factor, the uniform bound is $h^2/(4\nu)$. With Smagorinsky enabled,
-the bound is $(3/16)h^2/(\nu+2\max_{\rm faces}\nu_{\rm SGS})$. Compute
-$\nu_{\rm SGS}=C_s^2\Delta x\,\Delta y\,\sqrt{2S_{ij}S_{ij}}$ on the
-same faces used by the momentum flux. Recompute the bound from the current
-state at each timestep and the flux from the incoming state at each RK stage.
+For $d$ active directions, let $h=\min_i \Delta x_i$ and
+$\Delta=(\prod_i \Delta x_i)^{1/d}$. The uniform viscous bound is
+$h^2/(2d\nu)$. With Smagorinsky enabled, use
+$3h^2/[8d(\nu+2\max_{\rm faces}\nu_{\rm SGS})]$ with
+$\nu_{\rm SGS}=C_s^2\Delta^2\sqrt{2S_{ij}S_{ij}}$. Recompute the bound from the
+current state at each timestep and the flux from the incoming state at each RK stage.
+Ideal-gas linear cooling uses $-e/\tau_{\rm cool}$ evaluated on those same stage primitives.
 
 ## Turbulence driving
 
@@ -85,15 +90,15 @@ state at each timestep and the flux from the incoming state at each RK stage.
    recurrence. Build the finite run's modal coefficient table once at startup
    and transfer it to the GPU. This port supports continuous Cartesian
    parabolic driving.
-2. Select the modes due at the cycle-start time. Use AthenaK's cell centers
-   and ordered mode summation to render the raw acceleration. Cache the raw
-   field between OU updates.
+2. Select the modes due at the cycle-start time. Sum the same signed modes at
+   AthenaK's cell centers using a real matrix multiply at the simulation precision.
+   The summation order can differ at roundoff. Cache the raw field between OU updates.
 3. For each full-timestep kick, subtract the current mass-weighted mean
    acceleration. Normalize with the post-stage conserved state. In `edot`
    mode, match the quadratic solve so the box receives
    $\texttt{dedt}\,V_{\rm box}\Delta t$ of kinetic energy. Apply the
    momentum kick. The future `accel_rms` option sets the volume-weighted RMS
-   acceleration. Ideal gas will also add the kinetic-energy change to $E$.
+   acceleration. Ideal gas adds the full finite kinetic-energy change to $E$.
 
 The first driven target is the seed-1618 deck at $256^2$, with isothermal
 PPM4/Roe/RK3, uniform viscosity $1.5\times10^{-6}$, drag rate $0.3333335$,
@@ -123,30 +128,39 @@ flux_x = flux_x.at[..., 1:3].add(tau_x)
 flux_y = flux_y.at[..., 1:3].add(tau_y)
 ```
 
-The hook uses the existing isothermal equations and timestep limits.
-An ideal-gas LES also needs a decision about the energy closure.
+The 2D hook uses the existing isothermal equations and timestep limits.
+
+The periodic 3D pilot advances density, momentum, total energy $\overline E$,
+and SGS kinetic-energy density $K$. At $\gamma=5/3$, the effective Euler
+pressure is $2(U+K)/3$, where $U$ is thermal energy density. PPM4/Roe supplies
+the face mass flux that advects $K/R$. Each face uses the same deviatoric stress
+and velocity for momentum transport, total-energy work, and SGS production.
+Cooling removes $U$ and SGS decay converts $K$ into $U$ at fixed $\overline E$.
+The saved and live training paths use the same RK3 step and apply the same
+filtered impulses at their recorded times. [3D LES step](jathenax/les.py) ·
+[Differentiable trajectory](jathenax/online.py)
 
 ## Build and verification order
 
 1. **Current scaffold.** Verify all three RK schedules on a linear test equation
    and verify stress sign, component order, periodic wrapping, and conservation
    with a manufactured stress field inside JIT.
-2. **Hydro parity.** All five isothermal reconstructions and three Riemann
-   solvers run with RK2, RK3, and RK4.
+2. **Hydro parity.** AthenaK supplies reference fluxes for LLF, HLLE and Roe
+   with either EOS and for ideal-gas HLLC. The comparisons cover RK2, RK3, and RK4.
    The full-precision AthenaK fixture compares face states, fluxes, and RK
    registers for a smooth flow and a velocity jump at a prescribed timestep.
    See the [reproduction commands](validation/README.md#verify-against-athenak).
 3. **Viscosity.** Uniform and Smagorinsky momentum fluxes and timestep limits
    pass the [periodic shear checks](validation/README.md#verify-periodic-shear-decay).
-   Verify conduction and viscous work when the ideal-gas solver is available.
+   Ideal-gas tests also check total energy and viscous heating. Thermal conduction remains a future extension.
 4. **Forcing parity.** The [seed-1618 fixture](validation/README.md#verify-seed-1618-forcing)
    compares mode indices, RNG draws, modal amplitudes, accelerations, and the
    pre- and post-kick states over 12 cycles with drag. It replays AthenaK's
    timesteps, then checks adaptive timesteps and energy and momentum injection.
 5. **GPU run and solver menu.** Use the device-side timestep loop from the
    unforced example. Compare the $256^2$ pair's energy and enstrophy spectra
-   over a common late-time window. Verify the ideal-gas choices with AthenaK
-   when that solver is available.
+   over a common late-time window. The native ideal-gas step is checked against
+   acoustic waves, the Sod solution, and a short 3D AthenaK reference window.
    Test the student's predictor on a saved snapshot before applying it in a
    short coupled run.
 

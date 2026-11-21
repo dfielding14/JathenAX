@@ -64,3 +64,20 @@ file = "configured.npz"
         assert data["cycle"] == 2
         assert 0 < data["time"] < 1
     assert not (tmp_path / "configured.npz").exists()
+
+
+@pytest.mark.parametrize(("problem", "options", "shape"), [
+    ("sod", ["--nx", "32"], (32, 3)),
+    ("smooth", ["--nx", "9", "--ny", "7", "--nz", "6", "--eos", "ideal"], (6, 7, 9, 5)),
+    ("turbulence", ["--nx", "16", "--ny", "1"], (16, 2)),
+])
+def test_periodic_cli_dimensions(tmp_path, problem, options, shape):
+    output = tmp_path / "result.npz"
+    subprocess.run([sys.executable, "-m", "jathenax.run", problem, *options,
+                    "--tlim", "0.02", "--output", str(output)], cwd=tmp_path, check=True)
+    with np.load(output) as data:
+        assert data["conserved"].shape == shape
+        assert np.isfinite(data["conserved"]).all()
+        assert np.max(np.abs(data["conserved"] - data["initial"])) > 1e-6
+        assert data["eos"].item() == ("isothermal" if problem == "turbulence" else "ideal")
+        assert tuple(len(data[k]) for k in "zyx" if k in data) == shape[:-1]

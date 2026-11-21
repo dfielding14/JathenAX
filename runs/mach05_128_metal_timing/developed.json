@@ -1,0 +1,41 @@
+{
+  "device": "METAL:0",
+  "precision": "float32",
+  "source": "runs/stationary_mach05_jathenax/dedt1_32_seed1618_tcorr044/final.npz",
+  "absolute_start_time": 40.0,
+  "prolongation": "piecewise constant; each old conserved cell is repeated 4x4x4",
+  "measurements": [
+    {
+      "steps": 4,
+      "time_advanced": 0.0027487955521792173,
+      "last_dt": 0.0006852744263596833,
+      "wall_seconds": 1.4999124169698916
+    },
+    {
+      "steps": 32,
+      "time_advanced": 0.021763736091088504,
+      "last_dt": 0.0006756682996638119,
+      "wall_seconds": 7.812910499982536
+    },
+    {
+      "steps": 64,
+      "time_advanced": 0.04303268430521712,
+      "last_dt": 0.0006503402255475521,
+      "wall_seconds": 14.990539708989672
+    },
+    {
+      "steps": 128,
+      "time_advanced": 0.0843518985202536,
+      "last_dt": 0.0006484048790298402,
+      "wall_seconds": 29.460816250008065
+    },
+    {
+      "steps": 192,
+      "time_advanced": 0.1252606239868328,
+      "last_dt": 0.0006161880446597934,
+      "wall_seconds": 44.047518917010166
+    }
+  ],
+  "developed_mean_dt": 0.0006424057787626225,
+  "final_mach": 0.5458532876748023
+}

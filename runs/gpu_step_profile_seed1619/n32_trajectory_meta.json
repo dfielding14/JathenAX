@@ -1,0 +1,39 @@
+{
+  "N": 32,
+  "rounds": 5,
+  "steps": 24,
+  "start": 2.199258943012661,
+  "end": 2.2656046540185124,
+  "result_errors": {
+    "pilot": {
+      "max_abs": 0.0,
+      "relative_rms": 0.0,
+      "bitwise_equal": true,
+      "end_time_difference": 0.0
+    },
+    "ppm": {
+      "max_abs": 0.0,
+      "relative_rms": 0.0,
+      "bitwise_equal": true,
+      "end_time_difference": 0.0
+    },
+    "render": {
+      "max_abs": 3.337860107421875e-06,
+      "relative_rms": 1.2979503987175632e-07,
+      "bitwise_equal": false,
+      "end_time_difference": -4.423782229423523e-09
+    },
+    "combined": {
+      "max_abs": 3.337860107421875e-06,
+      "relative_rms": 1.2979503987175632e-07,
+      "bitwise_equal": false,
+      "end_time_difference": -4.423782229423523e-09
+    }
+  },
+  "ms_per_step": {
+    "pilot": 10.158007291708296,
+    "ppm": 8.639461125615828,
+    "render": 6.235744449562238,
+    "combined": 6.239195825764909
+  }
+}

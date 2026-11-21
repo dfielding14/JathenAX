@@ -1,0 +1,101 @@
+{
+  "training_seed": 1618,
+  "evaluation_seed": 1619,
+  "fine_n": 128,
+  "coarse_n": 32,
+  "reference": "runs/tbnn_128_to_32_pilot/seed1619_reference",
+  "target_sha256": "39f37df3a2cacee3b46ee7a0668099ad62142c22d7b35fadc87aff5c9762649b",
+  "target_time": [
+    2.2,
+    2.21,
+    2.22,
+    2.23,
+    2.24,
+    2.25,
+    2.2600000000000002,
+    2.27
+  ],
+  "steps": 125,
+  "calibration": "runs/tbnn_32_to_8_pilot/online_metal/metrics.json",
+  "fields": [
+    "density",
+    "velocity",
+    "thermal_energy",
+    "subgrid_kinetic_energy"
+  ],
+  "models": {
+    "analytic": {
+      "mean_mse": 0.13397005572915077,
+      "field_rmse": [
+        0.39952651028885633,
+        0.2667524867741828,
+        0.41209917824229797,
+        0.36779908725392946
+      ],
+      "direct_stress_relative_rmse": 0.9746365142057729,
+      "max_abs_budget_residual": [
+        1.1920928955078125e-07,
+        6.057234713807702e-09,
+        7.4451236287131906e-09,
+        2.9011744118179195e-09,
+        7.940107025206089e-07
+      ],
+      "min_density_thermal_K": [
+        0.5122311115264893,
+        1.7051583528518677,
+        0.004234354477375746
+      ],
+      "checkpoint_sha256": "fea224be4981f895233060940fcf199d15b3f90003485f6d133bb43cc7f431ce"
+    },
+    "frozen_8": {
+      "mean_mse": 0.12797526270151138,
+      "field_rmse": [
+        0.3887382144000092,
+        0.26142197478996254,
+        0.40141615371692446,
+        0.362363455805307
+      ],
+      "direct_stress_relative_rmse": 0.7341618831885633,
+      "max_abs_budget_residual": [
+        5.960464477539063e-08,
+        6.0636011767201126e-09,
+        9.307768777944148e-09,
+        3.377408575033769e-09,
+        7.198541425168514e-07
+      ],
+      "min_density_thermal_K": [
+        0.5122359991073608,
+        1.7051808834075928,
+        0.004236984997987747
+      ],
+      "checkpoint_sha256": "fea224be4981f895233060940fcf199d15b3f90003485f6d133bb43cc7f431ce"
+    },
+    "online_32": {
+      "mean_mse": 0.12745150551199913,
+      "field_rmse": [
+        0.388144763467923,
+        0.2614602762633902,
+        0.4005144439538176,
+        0.3610766798909376
+      ],
+      "direct_stress_relative_rmse": 0.7349170284850257,
+      "max_abs_budget_residual": [
+        5.960464477539063e-08,
+        6.752998160663992e-09,
+        8.396455086767673e-09,
+        2.497472451068461e-09,
+        7.112394087016582e-07
+      ],
+      "min_density_thermal_K": [
+        0.5122363567352295,
+        1.7051820755004883,
+        0.004237270448356867
+      ],
+      "checkpoint_sha256": "5982260954b4782cfd0ab6e867112343c40ccd4008549f2f2ecbdd2305b7b8bf"
+    }
+  },
+  "online32_mse_reduction_percent": {
+    "analytic": 4.86567702138625,
+    "frozen_8": 0.40926439880327736
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "time_start": 40.0,
+  "time_end": 40.08357501391317,
+  "coarse_cfl_steps_in_duration": 6.853321581941299,
+  "initial_unresolved_fraction_of_turbulent_kinetic_energy": 0.341305131286209,
+  "window_direct_sgs_fraction_of_injected_work": 0.18588132533393453,
+  "initial_two_tensor_span_fraction_of_squared_deviatoric_stress": 0.6742987476324502,
+  "projection_definition": "At the initial snapshot, independent least-squares coefficients per coarse cell on dev(sym G) and dev(GG^T), periodic centered coarse velocity gradients, Frobenius norm. This measures basis capacity on one snapshot.",
+  "steps": 32,
+  "coarse_solver_advanced": false
+}

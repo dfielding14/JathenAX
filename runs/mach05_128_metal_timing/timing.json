@@ -1,0 +1,126 @@
+{
+  "backend": "Apple M4 Max, 40-core GPU, METAL:0, JAX/jaxlib 0.4.34, jax-metal 0.1.1",
+  "grid": [
+    128,
+    128,
+    128
+  ],
+  "hydro_dtype": "float32",
+  "clock_dtype": "host float64",
+  "settings": {
+    "dedt": 1,
+    "tcorr": 0.44,
+    "tau_cool": 4.666666666666667,
+    "dt_update": 0.0025,
+    "initial_cs": 3,
+    "seed": 1618,
+    "solver": "periodic RK3 / PPM4 / Roe, CFL 0.4, solenoidal OU at npeak=2, zero explicit transport"
+  },
+  "cold_start_timing": {
+    "physical_time": 0.03125,
+    "steps": 34,
+    "warm_steps": 30,
+    "mean_warm_seconds": 0.22826486940224033,
+    "warm_reused_steps": 19,
+    "mean_seconds_reusing_force": 0.21566358547179812,
+    "warm_updated_steps": 11,
+    "mean_seconds_refreshing_force": 0.25003072346391325,
+    "first_step_including_jit_s": 1.7195640000281855,
+    "max_abs_net_mass_drift": 2.0681568457803223e-08,
+    "end_minus_start_energy_minus_measured_net_sources": -3.8849043448863085e-07
+  },
+  "developed_cfl_probe": {
+    "source": "developed.json",
+    "mean_dt_last_128_of_192_steps": 0.0006424057787626225,
+    "seconds_per_step_last_128": 0.23175679460155152,
+    "initial_state": "conserved piecewise-constant prolongation of the 32^3 stationary snapshot at t=40 with the continued absolute OU history; a timing proxy",
+    "completed_repeats": [
+      {
+        "log": "developed_steps.log",
+        "completed_steps": 192,
+        "developed_dt": 0.0006424057787626225,
+        "wall_seconds_per_step": 0.23175679460155152,
+        "hours_through_t40": 4.008487440030205
+      },
+      {
+        "log": "developed_verified.log",
+        "completed_steps": 192,
+        "developed_dt": 0.0006424057787626225,
+        "wall_seconds_per_step": 0.2270076500626601,
+        "hours_through_t40": 3.9263457868900518
+      }
+    ],
+    "shutdown_status": "Both synchronized all 192 GPU steps, validated the state and saved the same CFL measurement; jax-metal 0.1.1 segfaulted inside Metal client destruction at process exit. The from-rest and replay jobs exited 0."
+  },
+  "runtime_estimates_hours": {
+    "scaled_32_CFL_history": {
+      "t20": 1.9074585832533473,
+      "t40": 3.7701400425008056
+    },
+    "CFL_adjusted_with_developed_128_probe": {
+      "t20": 1.9881916624485403,
+      "t40": 3.9296319665856783
+    },
+    "extrapolating_last_128_developed_steps_directly": {
+      "t20": 2.004243720015102,
+      "t40": 4.008487440030204
+    },
+    "method": "Scale the 32^3 cycle history by 4 at fixed CFL. Charge a measured force refresh per 0.0025 and the reused-force rate otherwise. The second estimate adjusts cycle counts by the ratio of the predicted and measured developed timesteps. The third uses the observed developed throughput. The full assessment averages from t=20 to t=40."
+  },
+  "replay": {
+    "classification": "spin-up timing windows",
+    "consecutive_fine_steps_per_window": 4,
+    "coarse_grid": [
+      64,
+      64,
+      64
+    ],
+    "windows": [
+      {
+        "path": "replay/window_000004",
+        "steps": 4,
+        "time_start": 0.004025215050205588,
+        "time_end": 0.007885231520049274,
+        "bytes": 373322080
+      },
+      {
+        "path": "replay/window_000012",
+        "steps": 4,
+        "time_start": 0.011656517570372671,
+        "time_end": 0.015360467077698559,
+        "bytes": 373322080
+      },
+      {
+        "path": "replay/window_000019",
+        "steps": 4,
+        "time_start": 0.01810240454506129,
+        "time_end": 0.02171786449616775,
+        "bytes": 373322080
+      }
+    ],
+    "mean_per_window_total_seconds_after_compile": 4.549765999737605,
+    "mean_per_window_disk_write_fsync_seconds": 0.1154044993260565,
+    "first_record_extra_including_compile_seconds": 2.095602124876512,
+    "increment_over_four_ordinary_steps_estimated_seconds": 3.651787420977345,
+    "additional_seconds_three_windows_including_first_record_compilation": 13.050964387808547,
+    "three_windows_bytes": 1119966240,
+    "max_abs_energy_per_cell_one_step_residual": 2.9137590900063515e-06
+  },
+  "physics_crosscheck": {
+    "grid": [
+      16,
+      16,
+      16
+    ],
+    "steps": 7,
+    "max_cpu_f64_vs_metal_f32_absolute_component_errors": [
+      5.072248794313339e-07,
+      5.444385392447404e-07,
+      7.458926639392072e-07,
+      6.220447848065414e-07,
+      3.3809371444704084e-06
+    ]
+  },
+  "benchmark_scope": "Short GPU timing only. The three recorded windows were during spin-up. The full run was not launched.",
+  "full_run_input": "full_run.toml"
+}

@@ -1,0 +1,43 @@
+{
+  "first_cycle": 15097,
+  "last_cycle": 15128,
+  "recorded_steps": 32,
+  "time_start": 40.0,
+  "time_end": 40.08357501391317,
+  "fine_cells_xyz": [
+    32,
+    32,
+    32
+  ],
+  "coarse_cells_xyz": [
+    8,
+    8,
+    8
+  ],
+  "coarse_widths_xyz": [
+    0.125,
+    0.125,
+    0.125
+  ],
+  "gamma": 1.6666666666666667,
+  "driving_power_per_volume": 1.0,
+  "cooling_time": 4.666666666666667,
+  "max_abs_cell_residual_per_step": {
+    "mass": 1.3036446921965705e-15,
+    "momentum_x": 1.3895135042574225e-15,
+    "momentum_y": 1.4961989980299961e-15,
+    "momentum_z": 1.5243882545146192e-15,
+    "total_energy": 7.762887554996212e-15
+  },
+  "max_abs_cell_residual_whole_window": {
+    "mass": 1.1102230246251565e-15,
+    "momentum_x": 8.326672684688674e-16,
+    "momentum_y": 9.228728892196614e-16,
+    "momentum_z": 9.71445146547012e-16,
+    "total_energy": 5.4817261840867104e-15
+  },
+  "max_abs_energy_partition_residual": 6.938893903907228e-15,
+  "box_driving_work": 0.08357501391317947,
+  "box_subgrid_driving_work": 0.015535034350983816,
+  "box_cooling_loss": 0.08289122477542511
+}

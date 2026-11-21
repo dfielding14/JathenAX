@@ -7,7 +7,7 @@ import pytest
 
 from jathenax.forcing import normalize_force
 from jathenax.fluxes import (
-    RIEMANN_SOLVERS, flux_divergence, isothermal_flux, stress_face_fluxes, wenoz_face_states,
+    flux_divergence, isothermal_flux, stress_face_fluxes, wenoz_face_states,
 )
 from jathenax.hydro import (
     RK_STAGES,
@@ -121,7 +121,7 @@ def test_periodic_step_conserves_mass_and_momentum(integrator):
     )
 
 
-@pytest.mark.parametrize("rsolver", RIEMANN_SOLVERS)
+@pytest.mark.parametrize("rsolver", ("llf", "hlle", "roe"))
 def test_passive_scalars_share_mass_flux_without_changing_hydro(rsolver):
     x = (np.arange(12) + 0.5) / 12 - 0.5
     U = kelvin_helmholtz(x, x)
@@ -149,6 +149,36 @@ def test_wenoz_float32_flat_stencils_at_jump():
     left, right = jax.jit(lambda W: wenoz_face_states(W, 1))(W)
     np.testing.assert_allclose(left, jnp.roll(W, 1, axis=1), atol=2e-7)
     np.testing.assert_allclose(right, W, atol=2e-7)
+
+
+def test_wenoz_float32_uses_athenak_epsilon():
+    q = 1e-21*jnp.array([0.8, -1.7, 0.3, 1.3, 2.2, -0.4, -0.6, 1.2], dtype=jnp.float32)
+    left, right = jax.jit(lambda w: wenoz_face_states(w, 0))(q)
+    # Direct fifth-order stencil evaluated in double with the binary32 value of 1e-42.
+    np.testing.assert_allclose(np.asarray([left[3], right[3]])/1e-21,
+                               [0.8677708583, 0.8519169179], rtol=2e-6)
+
+
+def test_wenoz_float32_large_smoothness_indicators():
+    q = jnp.array([0.8, -1.7, 0.3, 1.3, 2.2, -0.4, -0.6, 1.2], dtype=jnp.float32)
+    faces = jax.jit(lambda w: wenoz_face_states(w, 0))
+    np.testing.assert_allclose(np.asarray(faces(1e20*q))/1e20, faces(q), rtol=2e-6, atol=2e-7)
+
+
+def test_wenoz_float32_gradient_on_flat_cells_and_jumps():
+    def loss(w):
+        left, right = wenoz_face_states(w, 0)
+        return jnp.sum(left * jnp.arange(len(w)) + 0.5*right)
+    gradient = jax.jit(jax.grad(loss))
+    for w in (np.ones(12), np.repeat([0., 1., 12.], 4)):
+        result = gradient(jnp.asarray(w, dtype=jnp.float32))
+        assert np.isfinite(result).all()
+        np.testing.assert_allclose(result.sum(), np.arange(len(w)).sum() + 0.5*len(w), rtol=2e-6)
+    w = jnp.sin(jnp.arange(12, dtype=jnp.float32))
+    direction = jnp.cos(0.7*jnp.arange(12, dtype=jnp.float32))
+    h = 0.001
+    difference = (loss(w+h*direction) - loss(w-h*direction)) / (2*h)
+    np.testing.assert_allclose(jnp.vdot(gradient(w), direction), difference, rtol=3e-3)
 
 
 def test_learned_stress_couples_conservatively_under_jit():

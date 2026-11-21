@@ -34,6 +34,8 @@ tlim = 0.001
 <hydro>
 eos = isothermal
 iso_sound_speed = 1.1
+gamma = 1.6666666666666667
+pfloor = 1.0e-10
 reconstruct = ppm4
 rsolver = roe
 viscosity = 0.0
@@ -44,3 +46,4 @@ fofc = false
 <problem>
 user_srcs = true
 velocity_jump = false
+jump_speed = 2.5

@@ -1,0 +1,208 @@
+{
+  "turnover_time": 0.43985178860253216,
+  "complete_reference_blocks": 45,
+  "reference_block_extent": [
+    20.0,
+    39.79333048711395
+  ],
+  "reference_percentile": 95,
+  "rms_log_spectrum_threshold": 0.10895456652854657,
+  "stationary_reference_cooling_tolerance": 0.02,
+  "reference_velocity_spectrum": [
+    0.15118233577255594,
+    0.22828201888949087,
+    0.09215447984578026,
+    0.07483636778496275,
+    0.04635655876334496,
+    0.02399852143456965,
+    0.014873048687035702,
+    0.009104333380087974,
+    0.006533246662407642,
+    0.0036058598504250436,
+    0.0022907299312035934,
+    0.0016234273450456184,
+    0.0011578798335160948,
+    0.0008324268120186206,
+    0.0006079306928763326
+  ],
+  "control": {
+    "steps": 15096,
+    "spectral_samples": 911,
+    "initial_vrms": 0.0,
+    "initial_cs_rms": 3.0000000000006986,
+    "initial_velocity_power_fraction_above_k3": null,
+    "initial_compressive_power_fraction": null,
+    "max_abs_discrete_step_budget_residual": 3.771582005041019e-12,
+    "whole_run_budget_residual_over_injected_work": -9.449108162584713e-14,
+    "late_mass_weighted_rms_speeds": [
+      1.1367465427128687,
+      2.2785683422006424
+    ],
+    "max_abs_one_turnover_imbalance": 0.6573528189134572,
+    "late_cooling_over_input": 1.0012911231969153,
+    "min_stage_rho": 0.21933072139060547,
+    "min_stage_thermal": 0.7002388927948016,
+    "spectrum": {
+      "total_blocks": 90,
+      "passed_blocks": 76,
+      "last_failing_block_start": 84.0,
+      "first_passing_block_start": 2,
+      "confirmed_by": 5,
+      "failures_after_confirmation": 12,
+      "blocks_after_confirmation": 85
+    },
+    "energy": {
+      "total_blocks": 90,
+      "passed_blocks": 55,
+      "last_failing_block_start": 34.0,
+      "first_passing_block_start": 35,
+      "confirmed_by": 38,
+      "failures_after_confirmation": 0,
+      "blocks_after_confirmation": 52
+    },
+    "joint": {
+      "total_blocks": 90,
+      "passed_blocks": 48,
+      "last_failing_block_start": 84.0,
+      "first_passing_block_start": 39,
+      "confirmed_by": 42,
+      "failures_after_confirmation": 5,
+      "blocks_after_confirmation": 48
+    },
+    "energy_tolerance_sensitivity": {
+      "0.01": {
+        "total_blocks": 90,
+        "passed_blocks": 47,
+        "last_failing_block_start": 58.0,
+        "first_passing_block_start": 45,
+        "confirmed_by": 48,
+        "failures_after_confirmation": 1,
+        "blocks_after_confirmation": 42
+      },
+      "0.05": {
+        "total_blocks": 90,
+        "passed_blocks": 62,
+        "last_failing_block_start": 27.0,
+        "first_passing_block_start": 28,
+        "confirmed_by": 31,
+        "failures_after_confirmation": 0,
+        "blocks_after_confirmation": 59
+      }
+    },
+    "spectrum_percentile_sensitivity": {
+      "90": {
+        "total_blocks": 90,
+        "passed_blocks": 76,
+        "last_failing_block_start": 84.0,
+        "first_passing_block_start": 2,
+        "confirmed_by": 5,
+        "failures_after_confirmation": 12,
+        "blocks_after_confirmation": 85
+      },
+      "99": {
+        "total_blocks": 90,
+        "passed_blocks": 86,
+        "last_failing_block_start": 57.0,
+        "first_passing_block_start": 2,
+        "confirmed_by": 5,
+        "failures_after_confirmation": 2,
+        "blocks_after_confirmation": 85
+      }
+    },
+    "late_spectrum_distance": 0.0012813382754074335,
+    "late_half_spectral_distances": [
+      0.011282786244460071,
+      0.012712179332328514
+    ]
+  },
+  "warm": {
+    "steps": 14915,
+    "spectral_samples": 911,
+    "initial_vrms": 1.1400000000000035,
+    "initial_cs_rms": 2.279999999999995,
+    "initial_velocity_power_fraction_above_k3": 2.1082544897590825e-31,
+    "initial_compressive_power_fraction": 7.633346511344888e-32,
+    "max_abs_discrete_step_budget_residual": 1.1089740237224532e-13,
+    "whole_run_budget_residual_over_injected_work": 1.1463920090992726e-15,
+    "late_mass_weighted_rms_speeds": [
+      1.1389557124349106,
+      2.2765136759650044
+    ],
+    "max_abs_one_turnover_imbalance": 0.02090117890726584,
+    "late_cooling_over_input": 0.999486137090444,
+    "min_stage_rho": 0.2184559245680254,
+    "min_stage_thermal": 0.8661073595032879,
+    "spectrum": {
+      "total_blocks": 90,
+      "passed_blocks": 81,
+      "last_failing_block_start": 84.0,
+      "first_passing_block_start": 4,
+      "confirmed_by": 7,
+      "failures_after_confirmation": 6,
+      "blocks_after_confirmation": 83
+    },
+    "energy": {
+      "total_blocks": 90,
+      "passed_blocks": 89,
+      "last_failing_block_start": 0.0,
+      "first_passing_block_start": 1,
+      "confirmed_by": 4,
+      "failures_after_confirmation": 0,
+      "blocks_after_confirmation": 86
+    },
+    "joint": {
+      "total_blocks": 90,
+      "passed_blocks": 81,
+      "last_failing_block_start": 84.0,
+      "first_passing_block_start": 4,
+      "confirmed_by": 7,
+      "failures_after_confirmation": 6,
+      "blocks_after_confirmation": 83
+    },
+    "energy_tolerance_sensitivity": {
+      "0.01": {
+        "total_blocks": 90,
+        "passed_blocks": 88,
+        "last_failing_block_start": 1.0,
+        "first_passing_block_start": 2,
+        "confirmed_by": 5,
+        "failures_after_confirmation": 0,
+        "blocks_after_confirmation": 85
+      },
+      "0.05": {
+        "total_blocks": 90,
+        "passed_blocks": 90,
+        "last_failing_block_start": null,
+        "first_passing_block_start": 0,
+        "confirmed_by": 3,
+        "failures_after_confirmation": 0,
+        "blocks_after_confirmation": 87
+      }
+    },
+    "spectrum_percentile_sensitivity": {
+      "90": {
+        "total_blocks": 90,
+        "passed_blocks": 81,
+        "last_failing_block_start": 84.0,
+        "first_passing_block_start": 4,
+        "confirmed_by": 7,
+        "failures_after_confirmation": 6,
+        "blocks_after_confirmation": 83
+      },
+      "99": {
+        "total_blocks": 90,
+        "passed_blocks": 88,
+        "last_failing_block_start": 1.0,
+        "first_passing_block_start": 2,
+        "confirmed_by": 5,
+        "failures_after_confirmation": 0,
+        "blocks_after_confirmation": 85
+      }
+    },
+    "late_spectrum_distance": 0.009242041306403779,
+    "late_half_spectral_distances": [
+      0.009487200479146972,
+      0.01814444150500407
+    ]
+  }
+}

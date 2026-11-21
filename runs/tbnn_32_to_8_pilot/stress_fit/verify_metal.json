@@ -1,0 +1,22 @@
+{
+  "backend": "METAL:0",
+  "prediction_shape": [
+    32,
+    3,
+    8,
+    8,
+    8,
+    6
+  ],
+  "cell_stage_predictions": 49152,
+  "bitwise_equal": true,
+  "reload_max_abs_error": 0.0,
+  "max_abs_deviatoric_trace": 1.7881393432617188e-07,
+  "min_full_stress_eigenvalue": 4.6620293953081315e-07,
+  "cubic_symmetries": 48,
+  "cubic_max_abs_error": 3.5762786865234375e-07,
+  "boost_max_abs_error": 1.4901161193847656e-07,
+  "zero_K_max_abs_stress": 0.0,
+  "weight_gradient_norm": 0.1077103391289711,
+  "directional_finite_difference": 0.10770558565855026
+}

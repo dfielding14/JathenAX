@@ -1,6 +1,7 @@
-"""AthenaK's continuous, Cartesian parabolic driving for periodic 2D hydro."""
+"""AthenaK's continuous, Cartesian parabolic driving for periodic hydro."""
 
 from fractions import Fraction
+from itertools import product
 from math import exp, log, pi, sqrt
 
 import jax
@@ -45,16 +46,13 @@ def ran_gaussian_st(seed):
             yield v1 * scale
 
 
-def cartesian_modes(nlow, nhigh, kx_bounds, ky_bounds):
-    """Keep the signed modes in AthenaK's x-outer, y-inner order."""
+def cartesian_modes(nlow, nhigh, kx_bounds, ky_bounds=None, kz_bounds=None):
+    """Enumerate the signed Cartesian modes in x-outermost order."""
     if not 1 <= nlow < nhigh:
         raise ValueError("parabolic driving requires 1 <= nlow < nhigh")
-    modes = [
-        (kx, ky)
-        for kx in range(kx_bounds[0], kx_bounds[1] + 1)
-        for ky in range(ky_bounds[0], ky_bounds[1] + 1)
-        if nlow**2 <= kx**2 + ky**2 <= nhigh**2
-    ]
+    bounds = [b for b in (kx_bounds, ky_bounds, kz_bounds) if b is not None]
+    modes = [k for k in product(*(range(lo, hi + 1) for lo, hi in bounds))
+             if nlow**2 <= sum(i*i for i in k) <= nhigh**2]
     if not modes:
         raise ValueError("no Cartesian forcing modes in the requested band")
     return np.asarray(modes)
@@ -67,11 +65,13 @@ def modal_coefficients(modes, lengths, nlow, nhigh, npeak, sol_fraction, rseed,
         raise ValueError("npeak must be in the forcing band and sol_fraction in [0, 1]")
     if not np.isfinite(tcorr) or tcorr < 0.0 or not 0.0 < dt_update < np.inf:
         raise ValueError("tcorr must be finite and nonnegative and dt_update positive")
-    Lx, _ = lengths
+    ndim = len(lengths)
+    if ndim == 1 and sol_fraction == 1.0:
+        raise ValueError("1D driving needs a compressive component (sol_fraction < 1)")
     dk = 2.0 * pi / np.asarray(lengths)
     k = modes * dk
-    kiso = np.sqrt(k[:, 0]**2 + k[:, 1]**2)
-    kpeak = npeak * 2.0 * pi / Lx
+    kiso = np.sqrt(np.sum(k**2, axis=1))
+    kpeak = npeak * 2.0 * pi / lengths[0]
     band = nhigh * max(dk) - nlow * min(dk)
     # Match the reference build's fused multiply-add here. At the band edge, rounding the
     # product before adding one changes the amplitude at order sqrt(epsilon).
@@ -81,17 +81,17 @@ def modal_coefficients(modes, lengths, nlow, nhigh, npeak, sol_fraction, rseed,
         for offset_sq in (kiso - kpeak)**2
     ])
     norm = np.sqrt(np.abs(power))
-    norm *= np.sqrt(kpeak / kiso)
+    norm *= (kpeak / kiso)**((ndim - 1) / 2)
 
     correlation = exp(-dt_update / tcorr) if tcorr > 1e-6 else 0.0
     noise_weight = sqrt(1.0 - correlation * correlation)
     gaussian = ran_gaussian_st(rseed)
-    amplitudes = np.empty((updates, len(modes), 2, 2))
+    amplitudes = np.empty((updates, len(modes), ndim, 2))
     for update in range(updates):
         # Draw even at the endpoints of the band where the spectral weight is zero.
-        noise = np.fromiter(gaussian, dtype=float, count=4 * len(modes)).reshape(-1, 2, 2)
+        noise = np.fromiter(gaussian, dtype=float, count=2 * ndim * len(modes)).reshape(-1, ndim, 2)
         noise *= norm[:, None, None]
-        k_dot_noise = k[:, 0, None] * noise[:, 0] + k[:, 1, None] * noise[:, 1]
+        k_dot_noise = np.sum(k[:, :, None] * noise, axis=1)
         longitudinal = k[:, :, None] * k_dot_noise[:, None] / kiso[:, None, None]**2
         noise = sol_fraction * (noise - longitudinal) + (1.0 - sol_fraction) * longitudinal
         amplitudes[update] = (
@@ -100,26 +100,53 @@ def modal_coefficients(modes, lengths, nlow, nhigh, npeak, sol_fraction, rseed,
     return amplitudes
 
 
+def periodic_basis(modes, coordinates, lengths):
+    """Tabulate separable Fourier phase factors in x, y, z order."""
+    k = modes * (2.0 * pi / jnp.asarray(lengths, dtype=coordinates[0].dtype))
+    factors = []
+    for i, x in enumerate(coordinates):
+        phase = k[:, i, None] * x
+        factors.extend((jnp.cos(phase), jnp.sin(phase)))
+    return tuple(factors)
+
+
 def forcing_basis(modes, x, y, lengths):
-    """Tabulate the two one-dimensional phase factors once on the flow device."""
-    k = modes * (2.0 * pi / jnp.asarray(lengths, dtype=x.dtype))
-    phase_x = k[:, 0, None] * x
-    phase_y = k[:, 1, None] * y
-    return jnp.cos(phase_x), jnp.sin(phase_x), jnp.cos(phase_y), jnp.sin(phase_y)
+    return periodic_basis(modes, (x, y), lengths)
 
 
 def render_force(amplitudes, basis):
-    """Render a raw acceleration in AthenaK's mode order."""
-    cos_x, sin_x, cos_y, sin_y = basis
-    shape = (cos_y.shape[1], cos_x.shape[1], 2)
+    """Sum the seeded Fourier modes with a full-precision matrix multiply."""
+    ndim = amplitudes.shape[1]
+    cx, sx = basis[:2]
+    real, imag = amplitudes[..., 0], amplitudes[..., 1]
+    if ndim == 1:
+        phase = jnp.concatenate((cx, -sx), axis=0).T
+        return jnp.matmul(phase, jnp.concatenate((real, imag)), precision=jax.lax.Precision.HIGHEST)
 
-    def add_mode(n, force):
-        real = cos_x[n] * cos_y[n, :, None] - sin_x[n] * sin_y[n, :, None]
-        imag = cos_x[n] * sin_y[n, :, None] + sin_x[n] * cos_y[n, :, None]
-        return force + (real[..., None] * amplitudes[n, :, 0]
-                        - imag[..., None] * amplitudes[n, :, 1])
+    # Separate x from the transverse coordinates, avoiding a full box for every mode.
+    modes, nx = cx.shape
+    cx, sx = cx[..., None], sx[..., None]
+    real, imag = real[:, None, :], imag[:, None, :]
+    weights = jnp.concatenate((cx*real - sx*imag, sx*real + cx*imag), axis=0)
+    weights = weights.reshape(2*modes, nx*ndim)
 
-    return jax.lax.fori_loop(0, len(amplitudes), add_mode, jnp.zeros(shape, amplitudes.dtype))
+    def contract(cosine, sine):
+        phase = jnp.concatenate((cosine, -sine), axis=0).reshape(2*modes, -1).T
+        field = jnp.matmul(phase, weights, precision=jax.lax.Precision.HIGHEST)
+        return field.reshape(*cosine.shape[1:], nx, ndim)
+
+    cy, sy = basis[2:4]
+    if ndim == 2:
+        return contract(cy, sy)
+    cz, sz = basis[4:6]
+    if modes > max(128, nx):
+        # For broad forcing bands, bound workspace by contracting one xy plane at a time.
+        def xy_plane(z):
+            c, s = z[0][:, None], z[1][:, None]
+            return contract(c*cy - s*sy, c*sy + s*cy)
+        return jax.lax.map(xy_plane, (cz.T, sz.T))
+    return contract(cz[:, :, None]*cy[:, None, :] - sz[:, :, None]*sy[:, None, :],
+                    cz[:, :, None]*sy[:, None, :] + sz[:, :, None]*cy[:, None, :])
 
 
 def update_force(time, update, raw_force, coefficients, basis, dt_update, tdriv_start):
@@ -134,16 +161,21 @@ def update_force(time, update, raw_force, coefficients, basis, dt_update, tdriv_
     return requested, raw_force
 
 
-def normalize_force(U, raw_force, dt, dedt):
+def normalize_force(U, raw_force, dt, dedt, *, return_parameters=False):
     """Remove net momentum input and solve for the specified kinetic power."""
-    rho = U[..., 0, None]
-    momentum = U[..., 1:3]
-    mean = jnp.sum(rho * raw_force, axis=(0, 1)) / jnp.sum(rho)
+    rho = U[..., :1]
+    ndim = U.ndim - 1
+    momentum = U[..., 1:1 + ndim]
+    mean = jnp.sum(rho * raw_force, axis=tuple(range(ndim))) / jnp.sum(rho)
     force = raw_force - mean
-    force_sq = force[..., 0]**2 + force[..., 1]**2
-    m0 = jnp.mean(0.5 * rho[..., 0] * force_sq * dt)
-    m1 = jnp.mean(momentum[..., 0] * force[..., 0] + momentum[..., 1] * force[..., 1])
-    root = jnp.sqrt(m1 * m1 + 4.0 * m0 * dedt)
-    scale = jnp.where(m1 >= 0.0, 2.0 * dedt / (m1 + root), (root - m1) / (2.0 * m0))
-    scale = jnp.where(m0 > 1e-30, scale, jnp.nan)
-    return jnp.where(dedt == 0.0, 0.0, scale * force)
+    m0 = jnp.mean(0.5 * rho[..., 0] * jnp.sum(force**2, axis=-1) * dt)
+    m1 = jnp.mean(jnp.sum(momentum * force, axis=-1))
+    # Before driving starts the zero kick must also have a finite, zero derivative.
+    off = dedt == 0.0
+    root = jnp.sqrt(jnp.where(off, 1.0, m1*m1 + 4.0*m0*dedt))
+    numerator = jnp.where(m1 >= 0.0, 2.0 * dedt, root - m1)
+    denominator = jnp.where(m1 >= 0.0, m1 + root, 2.0 * m0)
+    scale = numerator / jnp.where(off, 1.0, denominator)
+    scale = jnp.where(off, 0.0, jnp.where(m0 > 1e-30, scale, jnp.nan))
+    acceleration = scale * force
+    return (acceleration, scale, mean) if return_parameters else acceleration

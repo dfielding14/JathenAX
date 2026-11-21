@@ -1,0 +1,9 @@
+{
+  "snapshot": "runs/stationary_mach05_jathenax/dedt1_32_seed1618_tcorr044/final.npz",
+  "first_time": 40.0,
+  "last_time": 40.08357501391317,
+  "seed": 1618,
+  "steps": 32,
+  "backend": "TFRT_CPU_0",
+  "precision": "float64"
+}

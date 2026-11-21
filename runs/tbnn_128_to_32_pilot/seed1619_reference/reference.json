@@ -1,0 +1,35 @@
+{
+  "snapshot": "runs/stationary_mach05_jathenax/rest_cs230_seed1619_gpu_5turns_resolution/n128/final.npz",
+  "start": 2.199258943012661,
+  "cadence": 0.01,
+  "driving": {
+    "rseed": 1619,
+    "tcorr": 0.44,
+    "dt_update": 0.0025,
+    "tdriv_start": 0.0,
+    "dedt": 1.0,
+    "nlow": 1,
+    "nhigh": 3,
+    "npeak": 2,
+    "sol_fraction": 1.0,
+    "min_kx": -3,
+    "max_kx": 3,
+    "min_ky": -3,
+    "max_ky": 3,
+    "min_kz": -3,
+    "max_kz": 3
+  },
+  "tau_cool": 4.666666666666667,
+  "gamma": 1.6666666666666667,
+  "short_blocks": [
+    0
+  ],
+  "blocks": [
+    {
+      "file": "block_000.npz",
+      "sha256": "39f37df3a2cacee3b46ee7a0668099ad62142c22d7b35fadc87aff5c9762649b"
+    }
+  ],
+  "fine_n": 128,
+  "coarse_n": 32
+}

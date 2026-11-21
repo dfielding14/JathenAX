@@ -1,0 +1,85 @@
+{
+  "seed": 1618,
+  "tau_cool": 4.666666666666667,
+  "target_mach": 0.5,
+  "gamma": 1.6666666666666667,
+  "driving_power_per_volume": 1.0,
+  "grid_xyz": [
+    32,
+    32,
+    32
+  ],
+  "interval": [
+    20.0,
+    40.0
+  ],
+  "block_duration": 3.3333333333333335,
+  "mean_turbulent_kinetic_density": 0.6486100574440573,
+  "mean_thermal_density": 4.664263065170116,
+  "mach": 0.5003069933028684,
+  "mach_block_standard_error": 0.002116193585910814,
+  "block_mach": [
+    0.49375119401060086,
+    0.498736741470134,
+    0.5005640625404999,
+    0.5072970860328615,
+    0.49625814338231455,
+    0.5051501257246924
+  ],
+  "correlation_times": {
+    "kinetic": 0.47414647420062,
+    "thermal": 0.42590569205831813
+  },
+  "half_mean_energies": [
+    {
+      "kinetic": 0.642061067973675,
+      "thermal": 4.6658535405446395
+    },
+    {
+      "kinetic": 0.6551590469144395,
+      "thermal": 4.6626725897955925
+    }
+  ],
+  "mean_cooling_over_power": 0.9994849425364533,
+  "storage_rate_over_power": 0.0005138629095589042,
+  "history_budget_residual_over_power": -1.1945539878377431e-06,
+  "tau_from_measured_kinetic": 4.669992413597211,
+  "forcing_correlation_time": 0.44,
+  "peak_forcing_wavelength": 0.5,
+  "turbulent_rms_speed": 1.1389557124349106,
+  "eddy_turnover_time": 0.4389986322919243,
+  "forcing_correlation_over_turnover": 1.0022810269427214,
+  "measured_energy_budget": {
+    "time_start": 20.000970911724178,
+    "time_end": 40.0,
+    "steps": 7453,
+    "driving_work": 19.999029088275762,
+    "cooling_loss": 19.98875229567603,
+    "energy_change": 0.010276792599782425,
+    "mean_driving_rate": 0.999999999999997,
+    "mean_cooling_rate": 0.9994861354241533,
+    "mean_storage_rate": 0.0005138645758461876,
+    "cooling_over_drive": 0.9994861354241563,
+    "relative_closure_residual": 2.396376607047736e-15,
+    "max_abs_one_step_residual": 9.84082607069503e-14,
+    "max_abs_injected_power_error": 3.730349362740526e-14,
+    "min_stage_density": 0.2184559245680254,
+    "min_stage_thermal_density": 0.8781337072628109
+  },
+  "block_mean_kinetic": [
+    0.6327183808869841,
+    0.6443221020265614,
+    0.6491427210074796,
+    0.6649966440985428,
+    0.6402132826636364,
+    0.6602672139811393
+  ],
+  "block_mean_thermal": [
+    4.67161063618962,
+    4.66264990058675,
+    4.663300084857548,
+    4.651223657300287,
+    4.679310806293552,
+    4.657483305792939
+  ]
+}

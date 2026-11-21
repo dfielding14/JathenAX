@@ -1,0 +1,23 @@
+{
+  "turnover_time": 0.43985178860253216,
+  "turnover_convention": "L_box/npeak divided by the previous stationary mass-weighted 3D turbulent rms speed",
+  "spectrum_dt": 0.043985178860253216,
+  "reference_interval": [
+    20,
+    40
+  ],
+  "block_turnovers": 1,
+  "consecutive_passing_blocks": 3,
+  "reference_percentile": 95,
+  "cooling_tolerance": 0.02,
+  "shells": [
+    1,
+    15
+  ],
+  "initial_velocity_seed": 2718,
+  "initial_velocity": "Fresh centered, solenoidal field with the same parabolic k=1..3 mode distribution as forcing, independent draw; uniform initial density and thermal pressure.",
+  "spectrum": "Unweighted velocity, subtract volume mean, half squared Fourier amplitudes in nearest-integer shells. Equal shell weights in RMS log ratio of block-mean powers.",
+  "threshold": "Stationary hot-start control. Use complete one-turnover blocks starting at t=20. Compute the 95th percentile of distances of each control block to the mean of the other control blocks; compare warm blocks to the full control mean.",
+  "energy": "Absolute deviation of measured cooling over injected work from unity per block; split boundary-crossing fine increments in proportion to overlap.",
+  "timing": "Report start of first run of three passing one-turnover blocks, confirmation at the end of the third. Also count later failures."
+}

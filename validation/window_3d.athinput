@@ -1,0 +1,62 @@
+<job>
+basename = window_3d
+
+<mesh>
+nghost = 3
+nx1 = 32
+nx2 = 32
+nx3 = 32
+x1min = -0.5
+x1max = 0.5
+x2min = -0.5
+x2max = 0.5
+x3min = -0.5
+x3max = 0.5
+ix1_bc = periodic
+ox1_bc = periodic
+ix2_bc = periodic
+ox2_bc = periodic
+ix3_bc = periodic
+ox3_bc = periodic
+
+<meshblock>
+nx1 = 32
+nx2 = 32
+nx3 = 32
+
+<time>
+evolution = dynamic
+integrator = rk3
+cfl_number = 0.4
+nlim = 12
+tlim = 1.0
+
+<hydro>
+eos = ideal
+gamma = 1.6666666666666667
+reconstruct = ppm4
+rsolver = roe
+
+<problem>
+user_srcs = true
+tau_cool = 2.0
+coarsen_factor = 4
+window_start_cycle = 8
+
+<turb_driving>
+turb_flag = 2
+normalization = edot
+dedt = 0.03703705
+tcorr = 0.75
+dt_update = 0.0075
+nlow = 1
+nhigh = 3
+npeak = 2
+min_kx = -3
+max_kx = 3
+min_ky = -3
+max_ky = 3
+min_kz = -3
+max_kz = 3
+sol_fraction = 1.0
+rseed = 1618

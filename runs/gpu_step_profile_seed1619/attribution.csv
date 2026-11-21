@@ -1,0 +1,19 @@
+N,component,mean_ms,percent_of_whole_step,percent_lo95,percent_hi95
+32,PPM4 face reconstruction,2.069,19.884,17.706,21.199
+32,Roe and Euler face flux,2.345,22.537,22.097,23.130
+32,"RK, primitive recovery, cooling, normalized forcing kick",0.807,7.750,7.499,7.991
+32,Refresh Fourier driving field,4.078,39.183,38.469,39.873
+32,Flux divergence,0.093,0.894,0.617,1.162
+32,Adaptive CFL timestep and pilot diagnostics,1.015,9.752,8.385,11.644
+64,PPM4 face reconstruction,9.208,40.635,39.028,42.157
+64,Roe and Euler face flux,7.122,31.430,28.635,33.031
+64,"RK, primitive recovery, cooling, normalized forcing kick",1.233,5.443,5.241,5.702
+64,Refresh Fourier driving field,3.256,14.369,12.597,16.148
+64,Flux divergence,0.899,3.969,2.091,6.952
+64,Adaptive CFL timestep and pilot diagnostics,0.941,4.154,2.767,5.262
+128,PPM4 face reconstruction,104.026,46.285,45.842,46.736
+128,Roe and Euler face flux,90.138,40.106,39.434,40.801
+128,"RK, primitive recovery, cooling, normalized forcing kick",13.158,5.855,5.715,6.036
+128,Refresh Fourier driving field,8.627,3.838,3.662,4.070
+128,Flux divergence,7.120,3.168,2.495,3.841
+128,Adaptive CFL timestep and pilot diagnostics,1.682,0.749,0.387,1.168

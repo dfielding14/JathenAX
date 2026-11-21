@@ -1,0 +1,47 @@
+{
+  "seed": 1619,
+  "tau_cool": 14.0,
+  "target_mach": 0.5,
+  "gamma": 1.6666666666666667,
+  "driving_power_per_volume": 0.03703705,
+  "grid_xyz": [
+    32,
+    32,
+    32
+  ],
+  "interval": [
+    60.0,
+    120.0
+  ],
+  "block_duration": 10.0,
+  "mean_turbulent_kinetic_density": 0.07153625833596516,
+  "mean_thermal_density": 0.5198646831734554,
+  "mach": 0.4976846036024499,
+  "mach_block_standard_error": 0.0015928925881264816,
+  "block_mach": [
+    0.5028407991975724,
+    0.49445620314597627,
+    0.5002116359752812,
+    0.49764972830750737,
+    0.4988038389960976,
+    0.492074076792037
+  ],
+  "correlation_times": {
+    "kinetic": 1.3973015560513236,
+    "thermal": 1.3531189614447416
+  },
+  "half_mean_energies": [
+    {
+      "kinetic": 0.07204081846416756,
+      "thermal": 0.5204021327564374
+    },
+    {
+      "kinetic": 0.07103169820776277,
+      "thermal": 0.5193272335904734
+    }
+  ],
+  "mean_cooling_over_power": 1.0025958237831256,
+  "storage_rate_over_power": -0.0025970386612712342,
+  "history_budget_residual_over_power": -1.2148781456172361e-06,
+  "tau_from_measured_kinetic": 13.906643753186309
+}

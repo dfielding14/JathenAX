@@ -1,0 +1,56 @@
+{
+  "seed": 1619,
+  "training_seed": 1618,
+  "backend": "METAL:0",
+  "checkpoint": "runs/tbnn_32_to_8_pilot/stress_fit/stress_tbnn.npz",
+  "checkpoint_sha256": "f9f0434815e1c52f496c791d05be51e93eb2a1fdf9c0d31304e445d82592e099",
+  "calibration": "runs/tbnn_32_to_8_pilot/online_metal/metrics.json",
+  "reference": "runs/tbnn_128_to_32_pilot/seed1619_reference",
+  "stress": "tbnn",
+  "continuous": false,
+  "substeps": 1,
+  "failures": [],
+  "fields": [
+    "density",
+    "velocity",
+    "thermal_energy",
+    "subgrid_kinetic_energy"
+  ],
+  "min_density_thermal_K": [
+    0.5122347474098206,
+    1.705175757408142,
+    0.004237359389662743
+  ],
+  "max_abs_budget_residual": [
+    1.1920928955078125e-07,
+    6.055870471755043e-09,
+    8.396455086767673e-09,
+    2.6311681722290814e-09,
+    8.216593414545059e-07
+  ],
+  "max_step_fraction": 0.22445474565029144,
+  "starts": [
+    {
+      "start": 2.199258943012661,
+      "end": 2.27,
+      "steps": 125,
+      "field_mse": [
+        0.15329474210739136,
+        0.06913888454437256,
+        0.16333281993865967,
+        0.1328115612268448
+      ],
+      "mse": 0.1296444982290268,
+      "stress_error_power": 0.006987493950873613,
+      "stress_power": 0.012633745558559895
+    }
+  ],
+  "field_rmse": [
+    0.3915287244984605,
+    0.2629427400488033,
+    0.4041445532710538,
+    0.36443320543941216
+  ],
+  "mean_mse": 0.1296445019543171,
+  "direct_stress_relative_rmse": 0.7436946537334597
+}

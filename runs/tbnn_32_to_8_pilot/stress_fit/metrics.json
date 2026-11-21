@@ -1,0 +1,140 @@
+{
+  "window": "window_015096",
+  "backend": "METAL:0",
+  "jax_version": "0.4.34",
+  "tensor_convention": "positive Favre stress, trace removed, full Frobenius norm",
+  "weighting": "fine dt times SSPRK3 quadrature, equal cell volumes",
+  "gamma": 1.6666666666666667,
+  "k0": 1e-08,
+  "c_nu": 0.07666721194982529,
+  "constant_coefficients": [
+    0.15848720426553214,
+    1.6975900418822798
+  ],
+  "training": {
+    "seed": 73,
+    "adam_updates": 1200,
+    "minibatch": 2048,
+    "hidden": 16,
+    "parameter_count": 114,
+    "gradient_norm_first": 1.3619104623794556,
+    "gradient_norm_last": 0.043520018458366394,
+    "all_update_gradients_finite": true,
+    "training_seconds": 2.138200208020862
+  },
+  "scores": {
+    "Eddy viscosity": {
+      "train": {
+        "relative_rmse": 0.9719857775899661,
+        "tensor_cosine": 0.23503967359326594,
+        "mean_deviatoric_production": 0.3947938423733123,
+        "backscatter_fraction": 0.0,
+        "production_relative_rmse": 0.7413343158763601,
+        "raw_non_psd_fraction": 0.0,
+        "raw_min_eigenvalue": 0.016030094065590774,
+        "largest_fractional_limiter_correction": 0.0,
+        "limited_min_eigenvalue": 0.016030094065590774
+      },
+      "test": {
+        "relative_rmse": 0.9755895152670493,
+        "tensor_cosine": 0.22003542114146518,
+        "mean_deviatoric_production": 0.398926049387767,
+        "backscatter_fraction": 0.0,
+        "production_relative_rmse": 0.763464849037754,
+        "raw_non_psd_fraction": 0.0,
+        "raw_min_eigenvalue": 0.015662890062346495,
+        "largest_fractional_limiter_correction": 0.0,
+        "limited_min_eigenvalue": 0.015662890062346495
+      }
+    },
+    "Constant coefficients": {
+      "train": {
+        "relative_rmse": 0.7428253428078903,
+        "tensor_cosine": 0.670364058268678,
+        "mean_deviatoric_production": 0.3867811662504031,
+        "backscatter_fraction": 0.09491479898312631,
+        "production_relative_rmse": 0.7363704080479663,
+        "raw_non_psd_fraction": 0.02267339102991502,
+        "raw_min_eigenvalue": -0.29800972192356834,
+        "largest_fractional_limiter_correction": 0.4169952646791064,
+        "limited_min_eigenvalue": -4.440892098500626e-16
+      },
+      "test": {
+        "relative_rmse": 0.7589711890704495,
+        "tensor_cosine": 0.6531413487659264,
+        "mean_deviatoric_production": 0.3884046087694227,
+        "backscatter_fraction": 0.11047220224491765,
+        "production_relative_rmse": 0.8444983630660758,
+        "raw_non_psd_fraction": 0.022983456986240863,
+        "raw_min_eigenvalue": -0.26187159120710934,
+        "largest_fractional_limiter_correction": 0.4044193124343948,
+        "limited_min_eigenvalue": -3.3306690738754696e-16
+      }
+    },
+    "TBNN": {
+      "train": {
+        "relative_rmse": 0.711553791919363,
+        "tensor_cosine": 0.7026381385397892,
+        "mean_deviatoric_production": 0.3592869712492574,
+        "backscatter_fraction": 0.12044145206317741,
+        "production_relative_rmse": 0.5865990384306248,
+        "raw_non_psd_fraction": 0.0011331435092798636,
+        "raw_min_eigenvalue": -0.027922957652215363,
+        "largest_fractional_limiter_correction": 0.06311564586513452,
+        "limited_min_eigenvalue": 6.273018675617692e-07
+      },
+      "test": {
+        "relative_rmse": 0.7345276597101044,
+        "tensor_cosine": 0.6787736965010774,
+        "mean_deviatoric_production": 0.34620320463395976,
+        "backscatter_fraction": 0.12487759264647132,
+        "production_relative_rmse": 0.7255332867267851,
+        "raw_non_psd_fraction": 0.007527407117251152,
+        "raw_min_eigenvalue": -0.15250940511773659,
+        "largest_fractional_limiter_correction": 0.20877407061183628,
+        "limited_min_eigenvalue": 4.6620293953081315e-07
+      }
+    }
+  },
+  "splits": {
+    "train": {
+      "cycles": [
+        15097,
+        15116
+      ],
+      "time_interval": [
+        40.0,
+        40.05160954812737
+      ],
+      "cell_stage_samples": 30720,
+      "measured_deviatoric_production": 0.36250763424446825,
+      "measured_backscatter_fraction": 0.2855924779060141
+    },
+    "gap": {
+      "cycles": [
+        15117,
+        15120
+      ],
+      "time_interval": [
+        40.05160954812737,
+        40.062285242108615
+      ],
+      "cell_stage_samples": 6144,
+      "measured_deviatoric_production": 0.35012639170359633,
+      "measured_backscatter_fraction": 0.27937779290532844
+    },
+    "test": {
+      "cycles": [
+        15121,
+        15128
+      ],
+      "time_interval": [
+        40.062285242108615,
+        40.08357501391317
+      ],
+      "cell_stage_samples": 12288,
+      "measured_deviatoric_production": 0.3498260594967671,
+      "measured_backscatter_fraction": 0.2891881802718999
+    }
+  }
+}

@@ -1,0 +1,47 @@
+# Stationary native pilot in unit-power code units.
+[problem]
+name = "turbulence"
+initial_sound_speed = 2.30
+initial_vrms = 0.0
+
+[mesh]
+nx = 32
+ny = 32
+nz = 32
+
+[time]
+tlim = 2.199258943012661
+integrator = "rk3"
+cfl_number = 0.4
+
+[hydro]
+eos = "ideal"
+gamma = 1.6666666666666667
+reconstruct = "ppm4"
+rsolver = "roe"
+viscosity = 0.0
+
+[hydro_srcterms]
+cooling_ramp_exponent = 2
+cooling_ramp_time = 0.8797035772050643  # Two eddy turnovers in code time.
+drag_rate = 0.0
+tau_cool = 4.666666666666667  # 14/3
+
+[turb_driving]
+nlow = 1
+nhigh = 3
+npeak = 2
+min_kx = -3
+max_kx = 3
+min_ky = -3
+max_ky = 3
+min_kz = -3
+max_kz = 3
+sol_fraction = 1.0
+dedt = 1.0
+tcorr = 0.44  # One turnover at the peak forcing wavelength, L_box/2.
+dt_update = 0.0025
+rseed = 1622
+
+[output]
+file = "runs/stationary_mach05_jathenax/rest_cs230_32_gpu_5turns_seeds1619_1623/seed_1622/final.npz"

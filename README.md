@@ -1,11 +1,10 @@
 # JathenAX
 
-JathenAX is a two-dimensional, doubly periodic, isothermal hydro solver in
-JAX. It ports AthenaK's isothermal reconstruction and Riemann solvers,
-with PPM4 and Roe as the defaults, and uses RK2, RK3, or RK4 time integration.
-The grid runs on one JAX device. Uniform viscosity, Smagorinsky
-viscosity, linear drag, seeded turbulence driving, and passive scalars are
-available.
+JathenAX evolves isothermal or ideal-gas hydrodynamics on a periodic 1D, 2D,
+or 3D Cartesian grid on one JAX device. All active directions share one
+finite-volume update. The default operators are PPM4 reconstruction, a Roe
+Riemann solver, and RK3 integration. The ideal-gas solver conserves total
+energy and supports linear thermal cooling and energy-normalized forcing.
 
 ## Install
 
@@ -62,6 +61,8 @@ python -c 'import jax; import jax.numpy as jnp; print(jax.devices(), jnp.ones(1)
 ## Run an example
 
 ```sh
+python -m jathenax.run sod --nx 256 --output runs/sod.npz
+python -m jathenax.run acoustic --nx 64 --ny 32 --nz 16 --output runs/acoustic.npz
 python -m jathenax.run smooth --output runs/smooth.npz
 python -m jathenax.run kh --output runs/kh.npz
 python -m jathenax.run turbulence --nx 128 --ny 128 --tlim 1 --output runs/turbulence_smoke.npz
@@ -69,11 +70,13 @@ python -m jathenax.run turbulence --nx 128 --ny 128 --tlim 1 --output runs/turbu
 
 | Problem | Default grid and duration | Initial state |
 | --- | --- | --- |
+| `acoustic` | $64$, $t=1$ | Small right-moving sound wave in an ideal gas, one box crossing |
+| `sod` | $256$, $t=0.1$ | Sod shock tube at the center and the reversed jump at the periodic seam, before the fans interact |
 | `smooth` | $64\times48$, $t=0.2$ | Smooth periodic density and velocity waves |
 | `kh` | $128^2$, $t=3$ | Two periodic Kelvin–Helmholtz shear layers marked by a tracer |
 | `turbulence` | $256^2$, $t=45$ | Uniform density at rest, followed by seed-1618 forcing |
 
-The Kelvin–Helmholtz setup starts with uniform density and pressure
+The default isothermal Kelvin–Helmholtz setup starts with uniform density and pressure
 $\rho=p=1$. The inner band moves at $v_x=+0.5$ and carries tracer concentration
 $s=1$. The outer layers move at $v_x=-0.5$ and carry $s=0$. The interfaces at
 $y=\pm0.25$ are smoothed and seeded with a small transverse velocity
@@ -83,25 +86,33 @@ Use `--integrator rk2`, `--integrator rk3`, or `--integrator rk4` to choose the
 time integrator. Use `--viscosity` for the uniform kinematic coefficient and
 `--smagorinsky-cs` for the dimensionless Smagorinsky coefficient. The
 turbulence example defaults to uniform viscosity $1.5\times10^{-6}$ and drag
-rate 0.3333335. Its forcing settings are in [run.py](jathenax/run.py).
+rate 0.3333335. Its forcing settings are in [inputs/turbulence.toml](inputs/turbulence.toml).
 
 Use `--reconstruct` and `--rsolver` to select the face operators.
 
 | Option | Choices |
 | --- | --- |
 | `--reconstruct` | `dc` (donor cell), `plm` (piecewise linear), `ppm4` (default), `ppmx` (extremum-preserving PPM), `wenoz` |
-| `--rsolver` | `llf` (local Lax–Friedrichs), `hlle`, `roe` (default) |
+| `--rsolver` | `llf` (local Lax–Friedrichs), `hlle`, `hllc` (contact-resolving, ideal gas only), `roe` (default) |
 
 ```sh
 python -m jathenax.run kh --reconstruct wenoz --rsolver hlle --output runs/kh_wenoz_hlle.npz
 ```
 
+The same options are available as `hydro.reconstruct` and `hydro.rsolver` in a TOML deck.
+
 The run prints the device, precision, final simulation time, and changes in
 box-integrated conserved quantities. The first run includes JIT compilation.
-Each output file contains cell centers `x` and `y`, initial and final states
-`initial` and `conserved` in `(ny, nx, nvar)` order, and `time`, `dt`,
-and `cycle`. The first three components are $(\rho,\rho v_x,\rho v_y)$.
-The KH run appends the tracer density $\rho s$ as the fourth component.
+Snapshots contain the active cell-center coordinates, `initial` and `conserved`,
+the EOS and $\gamma$, the resolved input settings as JSON, and `time`, `dt`, and `cycle`. Grid shapes are
+`(nx, nvar)`, `(ny, nx, nvar)`, or `(nz, ny, nx, nvar)`. The conserved
+components are density, one momentum per active direction in $x,y,z$ order,
+total energy for ideal gas, then any passive scalar densities. The existing
+2D isothermal KH layout is $(\rho,m_x,m_y,\rho s)$.
+
+From Python, `jathenax.hydro_step(U, dt, (dx, dy, dz), eos="ideal", gamma=5/3)`
+advances a prescribed 3D step. Supply `(dx,)` or `(dx, dy)` on lower-dimensional
+arrays. For an adaptive run, use `jathenax.run.evolve(U, spacing, cfl, tlim, nlim)`.
 
 ## Run from an input file
 
@@ -117,19 +128,57 @@ python -m jathenax.run -i inputs/turbulence.toml --tlim 1 --viscosity 0 --output
 ```
 
 The runner applies the selected problem's defaults, then the TOML settings,
-then explicit command-line overrides. Use `[problem]` with
-`name = "smooth"`, `"kh"`, or `"turbulence"`. The `[turb_driving]` table is
-for `turbulence`. The domain is a doubly periodic unit square. The run stops
-at `time.tlim` or the positive cycle limit `time.nlim`, whichever comes
+then explicit command-line overrides. The periodic domain has unit length on
+each active axis. In `[mesh]`, set `ny = 1` and `nz = 1` for 1D, set
+`nz = 1` for 2D, and give all three sizes for 3D. Active axes need at least
+six cells. Use `problem.axis = "x"`, `"y"`, or `"z"` to orient an acoustic
+wave or shock tube. A 1D turbulence run defaults to compressive driving.
+A deck that explicitly requests fully solenoidal forcing needs two or three dimensions.
+
+Use `hydro.eos = "ideal"` for $P=(\gamma-1)e$, where $e$ is thermal energy
+per volume, and set `hydro.gamma` and `hydro.pfloor` as needed.
+`hydro_srcterms.tau_cool` applies $-e/\tau_{\rm cool}$ to total energy at
+each RK stage. Zero disables cooling. To ramp the rate up from zero, set
+`hydro_srcterms.cooling_ramp_time` to the time $T$ at which cooling reaches
+full strength. Each stage multiplies the rate by $[x^2(3-2x)]^p$ with
+$x=\min(1,\max(0,t/T))$. The default $T=0$ uses full strength from the start.
+`hydro_srcterms.cooling_ramp_exponent` sets $p$. Its default of 1 gives half
+strength at $T/2$, and 2 gives quarter strength there.
+A forcing kick adds its full kinetic
+work to total energy, preserving the cell's thermal energy.
+
+The [Mach-0.5 pilot deck](inputs/mach05_3d.toml) starts a $32^3$ ideal-gas
+box from rest with `problem.initial_sound_speed = 3`, unit driving power per
+unit volume, solenoidal forcing, $\tau_{\rm cool}=14/3$, and zero explicit
+viscosity and drag. The stationary run records the forcing work and thermal
+loss at every step. [Measure stationarity and energy balance](validation/README.md#measure-the-native-stationary-box)
+
+To initialize a turbulent velocity field, set `problem.initial_vrms` to its
+3D mass-weighted rms speed and `problem.initial_velocity_seed` to the seed for
+the initial draw. The field uses the driving band's mode weights and solenoidal
+fraction. Its bulk momentum is removed and its kinetic energy is added to total
+energy, preserving the requested initial sound speed.
+
+```sh
+JAX_PLATFORMS=cpu python -m validation.run_stationary_box inputs/mach05_3d.toml
+```
+
+The run stops at `time.tlim` or the positive cycle limit `time.nlim`, whichever comes
 first. The output and checkpoint paths are relative to the working directory.
 
 ## Use a learned SGS stress
 
-Supply a JAX predictor with `--sgs-model` and its checkpoint with
+For 2D isothermal runs, supply a JAX predictor with `--sgs-model` and its checkpoint with
 `--sgs-weights`. JathenAX calls the predictor on the full periodic density
 and velocity fields at each Runge–Kutta stage and adds its stress to the
 momentum face fluxes. See the [model interface and runnable example](examples/README.md).
 The same settings can be written as `model` and `weights` in an `[sgs]` table.
+
+The 3D ideal-gas pilot trains a first-derivative TBNN inside an $8^3$ Form A
+solver. A live $32^3$ run supplies filtered targets and driving impulses. The
+coarse solver predicts all eight comparison states before updating the weights.
+The [online training instructions](validation/README.md#online-stress-training)
+give the CPU and GPU commands, the checkpoint format, and the analytic comparison.
 
 ## Plot a run
 
@@ -138,10 +187,11 @@ python -m jathenax.plot_snapshot runs/kh.npz
 python -m jathenax.spectra runs/kh.npz
 ```
 
-The field plot shows initial and final density, vorticity, and the first
-tracer concentration where present, with shared color scales. The spectrum script
+The field plot shows profiles in 1D, maps in 2D and a central $z$ slice in 3D.
+It includes ideal-gas pressure and the first tracer concentration when present.
+The spectrum script
 plots the final density-weighted kinetic energy and Fourier-curl enstrophy
-in complete integer shells and writes a CSV with all shells, including the
+in complete integer shells (kinetic energy alone in 1D) and writes a CSV with all shells, including the
 zero mode.
 
 ## Code and verification
@@ -149,7 +199,8 @@ zero mode.
 - [hydro.py](jathenax/hydro.py) handles time integration and timestep limits.
 - [fluxes.py](jathenax/fluxes.py) holds reconstruction, Riemann, and viscous fluxes.
 - [forcing.py](jathenax/forcing.py) builds the seeded OU sequence and normalizes kicks.
-- [initial_conditions.py](jathenax/initial_conditions.py) defines the shear layers.
+- [initial_conditions.py](jathenax/initial_conditions.py) defines the example problems.
+- [test_periodic_hydro.py](tests/test_periodic_hydro.py) checks the acoustic wave, Sod solution, conservation, and energy sources.
 
 See the [validation instructions](validation/README.md) for the AthenaK
 stage, shear-decay, and forcing comparisons. The [design notes](DESIGN.md)

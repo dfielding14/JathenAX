@@ -1,0 +1,175 @@
+{
+  "host": "Apple M4 Max, 128 GiB, 12 performance and 4 efficiency cores",
+  "solver": "float64 AthenaK, PPM4 / Roe / RK3, one periodic MeshBlock",
+  "athenak_commit": "c50d3d5e962cf4c576de88c7b5dea33f4d2674dc",
+  "kokkos_commit": "08ceff92bcf3a828844480bc1e6137eb74028517",
+  "problem_generator_sha256": "75b20a59770146f0b4660daa4b51a649d7611cfbfe91e828290108e0822b3582",
+  "openmp_executable": "athena-openmp",
+  "compiler": "AppleClang, CMake Release, -O3 -DNDEBUG",
+  "runtime_env": {
+    "OMP_NUM_THREADS": "12 for the primary comparison",
+    "OMP_DYNAMIC": "FALSE",
+    "OMP_PROC_BIND": "FALSE"
+  },
+  "tau_cool": 14.0,
+  "seed": 1618,
+  "dedt_per_volume": 0.03703705,
+  "reference_cycle_counts_32": {
+    "until_t60_interpolated": 7630.092638462301,
+    "until_t120_exact": 15075,
+    "source": "runs/stationary_mach05/tau14/athena.stdout"
+  },
+  "method": "Mean interior wall seconds per RK3 cycle, from cycle 4 to the start of the last cycle. Full-duration estimates scale the prior 32^3 cycle count linearly with fine grid size at fixed acoustic CFL. Both timed states are in spin-up.",
+  "runs": {
+    "128_serial": {
+      "fine_grid": 128,
+      "threads": 1,
+      "fine_cycles_completed": 24,
+      "simulation_time_reached": 0.06780479712237159,
+      "timed_step_count": 19,
+      "wall_seconds_per_step": 1.5151088947368423,
+      "median_wall_seconds_per_step": 1.513259999999999,
+      "p10_p90_seconds_per_step": [
+        1.5055500000000002,
+        1.5318044000000033
+      ],
+      "million_cell_cycles_per_wall_second": 1.3841592556713571,
+      "peak_rss_bytes": 764723200,
+      "peak_rss_GiB": 0.7122039794921875,
+      "end_instantaneous_mach": 0.07104130208308937,
+      "recorded_eos_floor_events": 0
+    },
+    "128_omp4": {
+      "fine_grid": 128,
+      "threads": 4,
+      "fine_cycles_completed": 24,
+      "simulation_time_reached": 0.0678047971223716,
+      "timed_step_count": 19,
+      "wall_seconds_per_step": 0.4104156315789474,
+      "median_wall_seconds_per_step": 0.410266,
+      "p10_p90_seconds_per_step": [
+        0.40738460000000015,
+        0.41395599999999994
+      ],
+      "million_cell_cycles_per_wall_second": 5.109824866883981,
+      "peak_rss_bytes": 669515776,
+      "peak_rss_GiB": 0.62353515625,
+      "end_instantaneous_mach": 0.0710413020830911,
+      "recorded_eos_floor_events": 0
+    },
+    "128_omp8": {
+      "fine_grid": 128,
+      "threads": 8,
+      "fine_cycles_completed": 24,
+      "simulation_time_reached": 0.0678047971223716,
+      "timed_step_count": 19,
+      "wall_seconds_per_step": 0.2153250473684211,
+      "median_wall_seconds_per_step": 0.21244299999999994,
+      "p10_p90_seconds_per_step": [
+        0.2113253999999996,
+        0.22101879999999996
+      ],
+      "million_cell_cycles_per_wall_second": 9.739470747273415,
+      "peak_rss_bytes": 670056448,
+      "peak_rss_GiB": 0.6240386962890625,
+      "end_instantaneous_mach": 0.07104130208309117,
+      "recorded_eos_floor_events": 0
+    },
+    "128_omp12": {
+      "fine_grid": 128,
+      "threads": 12,
+      "fine_cycles_completed": 24,
+      "simulation_time_reached": 0.0678047971223716,
+      "timed_step_count": 19,
+      "wall_seconds_per_step": 0.18374627894736845,
+      "median_wall_seconds_per_step": 0.18286099999999994,
+      "p10_p90_seconds_per_step": [
+        0.16537119999999988,
+        0.20166432000000006
+      ],
+      "million_cell_cycles_per_wall_second": 11.413303235385245,
+      "peak_rss_bytes": 669892608,
+      "peak_rss_GiB": 0.6238861083984375,
+      "end_instantaneous_mach": 0.07104130208309131,
+      "recorded_eos_floor_events": 0
+    },
+    "128_omp16": {
+      "fine_grid": 128,
+      "threads": 16,
+      "fine_cycles_completed": 24,
+      "simulation_time_reached": 0.0678047971223716,
+      "timed_step_count": 19,
+      "wall_seconds_per_step": 0.17838474210526317,
+      "median_wall_seconds_per_step": 0.1757559999999998,
+      "p10_p90_seconds_per_step": [
+        0.17214479999999988,
+        0.18353520000000018
+      ],
+      "million_cell_cycles_per_wall_second": 11.756341799471224,
+      "peak_rss_bytes": 670056448,
+      "peak_rss_GiB": 0.6240386962890625,
+      "end_instantaneous_mach": 0.07104130208309122,
+      "recorded_eos_floor_events": 0
+    },
+    "128_pilot": {
+      "fine_grid": 128,
+      "threads": 12,
+      "fine_cycles_completed": 256,
+      "simulation_time_reached": 0.6045668793699813,
+      "timed_step_count": 251,
+      "wall_seconds_per_step": 0.18553395099601594,
+      "median_wall_seconds_per_step": 0.18578099999999997,
+      "p10_p90_seconds_per_step": [
+        0.17022400000000015,
+        0.19932999999999623
+      ],
+      "million_cell_cycles_per_wall_second": 11.303332833380091,
+      "peak_rss_bytes": 766230528,
+      "peak_rss_GiB": 0.7136077880859375,
+      "end_instantaneous_mach": 0.2154305264710397,
+      "recorded_eos_floor_events": 0,
+      "projected_hours_to_t60": 1.5729347040883628,
+      "projected_hours_to_t120": 3.1076936791832668,
+      "native_checkpoint": "128_pilot/rst/stationary.00001.rst"
+    },
+    "256_probe": {
+      "fine_grid": 256,
+      "threads": 12,
+      "fine_cycles_completed": 16,
+      "simulation_time_reached": 0.0235733903471913,
+      "timed_step_count": 11,
+      "wall_seconds_per_step": 1.2573994545454548,
+      "median_wall_seconds_per_step": 1.2522979999999997,
+      "p10_p90_seconds_per_step": [
+        1.239642,
+        1.2791689999999996
+      ],
+      "million_cell_cycles_per_wall_second": 13.342789309595256,
+      "peak_rss_bytes": 5582061568,
+      "peak_rss_GiB": 5.198699951171875,
+      "end_instantaneous_mach": 0.04182248370609428,
+      "recorded_eos_floor_events": 0,
+      "projected_hours_to_t60": 21.32016515940842,
+      "projected_hours_to_t120": 42.122881727272734,
+      "native_checkpoint": "256_probe/rst/stationary.00001.rst"
+    }
+  },
+  "filtered_output_trial": {
+    "timing": "spin-up",
+    "coarse_grid": 64,
+    "consecutive_steps": 4,
+    "total_bytes_including_headers": 285213163,
+    "time_interval": [
+      0.6045668793699813,
+      0.6131021161378408
+    ],
+    "max_abs_cell_residual": 7.467984564080155e-16,
+    "budget_file": "128_pilot/filter64_timing/budget.json",
+    "contents": "Filtered endpoints, RK-weighted numerical face fluxes, signed cooling, driving impulse and work. Additional physical SGS moments are needed for measured-closure replay."
+  },
+  "openmp_validation": {
+    "32_cubed_reference_steps": 4,
+    "serial_vs_threaded_max_abs_difference_all_fields": 6.661338147750939e-16,
+    "serial_vs_threaded_128_cubed_final_history_max_abs_difference": 2.930988785010413e-14
+  }
+}

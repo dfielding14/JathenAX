@@ -1,0 +1,8 @@
+method,face_data,number_compared,finite_athenak,max_abs_difference_on_finite_values
+hlle,random primitive states,4096,4096,1.9073486e-06
+hllc,random primitive states,4096,4096,1.1920929e-06
+wenoz,smooth,8192,8192,2.3841858e-07
+wenoz,jump,8192,8176,0.0
+hllc,"ppm4 opposing streams, x faces",3072,3072,2.3841858e-06
+hllc,"plm opposing streams, x faces",3072,3072,0.0014050007
+hllc,"wenoz opposing streams, x faces",3072,3072,0.0014169291

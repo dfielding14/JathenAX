@@ -1,0 +1,118 @@
+{
+  "seed": 1618,
+  "tau_cool": 4.666666666666667,
+  "target_mach": 0.5,
+  "gamma": 1.6666666666666667,
+  "driving_power_per_volume": 1.0,
+  "grid_xyz": [
+    32,
+    32,
+    32
+  ],
+  "interval": [
+    20.0,
+    40.0
+  ],
+  "block_duration": 3.3333333333333335,
+  "mean_turbulent_kinetic_density": 0.6435886433652341,
+  "mean_thermal_density": 4.675601403837676,
+  "mach": 0.49776195372755133,
+  "mach_block_standard_error": 0.0016872537466077378,
+  "block_mach": [
+    0.5005848428607169,
+    0.5013496821612267,
+    0.49336192476622864,
+    0.5013227658996694,
+    0.4978497063778213,
+    0.4920301354363109
+  ],
+  "correlation_times": {
+    "kinetic": 0.6384773012777215,
+    "thermal": 0.3808136934772864
+  },
+  "half_mean_energies": [
+    {
+      "kinetic": 0.6461558444607537,
+      "thermal": 4.681422725258857
+    },
+    {
+      "kinetic": 0.6410214422697145,
+      "thermal": 4.669780082416496
+    }
+  ],
+  "mean_cooling_over_power": 1.0019145865366448,
+  "storage_rate_over_power": -0.0019157973404137162,
+  "history_budget_residual_over_power": -1.2108037689361438e-06,
+  "tau_from_measured_kinetic": 4.633838232229685,
+  "measured_energy_budget": {
+    "time_start": 20.00191447950043,
+    "time_end": 40.0,
+    "steps": 7495,
+    "driving_work": 19.998085520499615,
+    "cooling_loss": 20.036393099037817,
+    "energy_change": -0.038307578538170795,
+    "mean_driving_rate": 1.0000000000000022,
+    "mean_cooling_rate": 1.0019155622921494,
+    "mean_storage_rate": -0.0019155622921455454,
+    "cooling_over_drive": 1.0019155622921472,
+    "relative_closure_residual": 1.5405819172923708e-15,
+    "max_abs_one_step_residual": 1.0682644005499675e-13,
+    "max_abs_injected_power_error": 3.552713678800501e-14,
+    "min_stage_density": 0.24573838031989526,
+    "min_stage_thermal_density": 0.7077233158259069
+  },
+  "block_mean_kinetic": [
+    0.6520666576753539,
+    0.6530009982613552,
+    0.6333998774455518,
+    0.6509431875080339,
+    0.6431863530070897,
+    0.6289347862940196
+  ],
+  "block_mean_thermal": [
+    4.6839161073117,
+    4.67632689315801,
+    4.68402517530686,
+    4.662090901374558,
+    4.671031709458379,
+    4.676217636416548
+  ],
+  "cycles_total": 15127,
+  "endpoint_mach": 0.49535207492882644,
+  "whole_run_budget": {
+    "time_start": 0.0,
+    "time_end": 40.0,
+    "steps": 15127,
+    "driving_work": 40.0,
+    "cooling_loss": 42.79521144980538,
+    "energy_change": -2.7952114498091536,
+    "mean_driving_rate": 1.0,
+    "mean_cooling_rate": 1.0698802862451344,
+    "mean_storage_rate": -0.06988028624522884,
+    "cooling_over_drive": 1.0698802862451344,
+    "relative_closure_residual": -9.424683256042954e-14,
+    "max_abs_one_step_residual": 3.771582005041019e-12,
+    "max_abs_injected_power_error": 3.552713678800501e-14,
+    "min_stage_density": 0.24255685426272558,
+    "min_stage_thermal_density": 0.7077233158259069,
+    "independent_snapshot_residual": -6.661338147750939e-15,
+    "max_mass_drift": 1.709743457922741e-14,
+    "max_abs_box_momentum_component": 1.6147793754808619e-15
+  },
+  "later_window_check": {
+    "interval": [
+      26.666666666666668,
+      40.0
+    ],
+    "mach": 0.4961492768766981,
+    "mach_block_standard_error": 0.0021298068388767273,
+    "mean_cooling_over_power": 1.00143029049409
+  },
+  "half_window_mach": [
+    0.4984435281860278,
+    0.4970777419288437
+  ],
+  "initial_sound_speed": 3.0,
+  "forcing_correlation_time": 0.25,
+  "forcing_update_interval": 0.0025
+}
